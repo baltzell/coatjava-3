@@ -17,7 +17,11 @@
     <dependency>
       <groupId>org.openjfx</groupId>
       <artifactId>javafx-controls</artifactId>
+<<<<<<< HEAD
       <version>23</version>
+=======
+      <version>24-ea+5</version>
+>>>>>>> d4e3960bd (build(deps): bump org.openjfx:javafx-controls from 22.0.2 to 24-ea+5)
     </dependency>
     <dependency>
       <groupId>org.jlab.ccdbrcdb</groupId>
