@@ -126,7 +126,7 @@ public class DCURWellHBPostClusterAI extends DCEngine {
         
         // Read urwell crosses, and make urwell-dc-crosses combos
         URWellReader uRWellReader = new URWellReader(event, "HB");
-        List<URWellCross> urCrosses = uRWellReader.getUrwellCrosses();        
+        List<URWellCross> urCrosses = uRWellReader.get1RUrwellCrosses();        
         URWellDCCrossesListFinder uRWellDCCrossListLister = new URWellDCCrossesListFinder();        
         URWellDCCrossesList urDC4CrossesList = uRWellDCCrossListLister.candURWellDCCrossesLists(event, crosses, urCrosses,
                 false,

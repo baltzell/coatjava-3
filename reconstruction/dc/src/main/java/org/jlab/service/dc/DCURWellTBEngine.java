@@ -181,7 +181,7 @@ public class DCURWellTBEngine extends DCEngine {
         
         // Read urwell crosses on HB tracks
         URWellReader uRWellReader = new URWellReader(event, this.getBanks().getPrefix());
-        List<URWellCross> urCrosses = uRWellReader.getUrwellCrosses();
+        List<URWellCross> urCrosses = uRWellReader.get1RUrwellCrosses();
         
         DataBank trkbank = event.getBank(this.getBanks().getInputTracksBank());
         //DataBank trkcovbank = event.getBank("TimeBasedTrkg::TBCovMat");

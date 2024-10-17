@@ -51,7 +51,15 @@ public class URWellReader{
 
     public List<URWellCross> getUrwellCrosses() {
         return urCrosses;
-    }    
+    }  
+    
+    public List<URWellCross> get1RUrwellCrosses() {
+        List<URWellCross>     urCrosses1R  = new ArrayList<>(); 
+        for(URWellCross crs: urCrosses){
+            if(crs.region() == 1) urCrosses1R.add(crs);
+        }
+        return urCrosses1R;
+    } 
     
     public final void readHits(DataBank bank) {
 
