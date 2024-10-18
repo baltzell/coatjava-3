@@ -503,7 +503,7 @@ public class HitReader {
             if (event.hasBank("MC::Particle") ||
                     event.getBank("RUN::config").getInt("run", 0) < 100) {
                 tProp[i] = 0;
-                tFlight[i] = 0;
+                //tFlight[i] = 0;
             }
         }
 
