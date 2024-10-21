@@ -29,6 +29,6 @@ public class URWellConstants {
     // cross
     public final static double deltaE = 200;
     public final static double deltaT = 50;
-    public final static double meanT = 180;
+    public final static double meanT = 180 + 550;
 
 }
