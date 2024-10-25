@@ -218,7 +218,7 @@ public class Track extends Trajectory implements Comparable<Track> {
      * Updates the crosses positions based on trajectories or helix
      * @param trackId
      */
-    public void update_Crosses(int trackId) {
+    public void update_Crosses(int trackId, double xb, double yb) {
         for (int i = 0; i < this.size(); i++) {
             Cross cross = this.get(i);
             cross.setAssociatedTrackID(trackId);
@@ -233,7 +233,9 @@ public class Track extends Trajectory implements Comparable<Track> {
                 trackDir = new Vector3D(traj.px, traj.py, traj.pz).asUnit();
             }
             else if (this.getHelix() != null && this.getHelix().getCurvature() != 0) {
-                double R = Math.sqrt(cross.getPoint().x() * cross.getPoint().x() + cross.getPoint().y() * cross.getPoint().y());
+                double Cx = cross.getPoint().x()-xb;
+                double Cy = cross.getPoint().y()-yb;
+                double R = Math.sqrt(Cx * Cx + Cy * Cy);
                 trackPos = this.getHelix().getPointAtRadius(R);
                 trackDir = this.getHelix().getTrackDirectionAtRadius(R);
             }
