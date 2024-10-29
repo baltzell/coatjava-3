@@ -276,10 +276,7 @@ public class CLASDecoder4 {
     public Bank getDataBankTDC(String name, DetectorType type){
 
         List<DetectorDataDgtz> tdcDGTZ = this.getEntriesTDC(type);
-        if(schemaFactory.hasSchema(name)==false){
-          System.out.println("WARNING: No schema for TDC type : "  + type);
-          return null;
-        }
+        if(schemaFactory.hasSchema(name)==false) return null;
         Bank tdcBANK = new Bank(schemaFactory.getSchema(name), tdcDGTZ.size());
 
         if(tdcBANK==null) return null;
