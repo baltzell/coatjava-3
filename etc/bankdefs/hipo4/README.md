@@ -399,22 +399,3 @@ etc/bankdefs/util/dumpBankIDs.rb etc/bankdefs/hipo4
 | 24 | `AHDC::PreClusters` | Pre Clusters info |
 | 25 | `AHDC::Clusters` | Clusters info |
 | 26 | `AHDC::KFTrack` | Reco Kalman Filter Tracks |
-
-## Group 31000
-
-| Item ID | Name | Description |
-| --- | --- | --- |
-| 1 | `HEADER::info` | Event Header Information |
-| 21 | `EVENT::particle` | Container Bank for reconstructed CLAS6 Data |
-| 22 | `EVENT::detector` | Detector information for reconstructed CLAS6 Data |
-| 23 | `EVENT::beam` | Beam information |
-| 31 | `DETECTOR::ecpb` | EC detector bank |
-| 32 | `DETECTOR::scpb` | SC detector bank |
-| 33 | `DETECTOR::ccpb` | CC detector bank |
-| 34 | `DETECTOR::lcpb` | LC detector bank |
-| 35 | `DETECTOR::dcpb` | DC detector bank |
-| 41 | `TAGGER::tagr` | Tagger bank |
-| 42 | `TAGGER::tgpb` | TGPB Bank |
-| 43 | `HEADER::tgbi` | TGBI Bank |
-| 51 | `DETECTOR::icpb` | IC detector bank |
-| 55 | `MC::particle` | Container Bank for reconstructed CLAS6 Data |
