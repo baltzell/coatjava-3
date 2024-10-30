@@ -91,7 +91,7 @@ public class DetectorEventDecoder {
             "/daq/tt/ftcal","/daq/tt/fthodo","/daq/tt/fttrk","/daq/tt/ltcc",
             "/daq/tt/ec","/daq/tt/ftof","/daq/tt/htcc","/daq/tt/dc","/daq/tt/ctof","/daq/tt/cnd","/daq/tt/svt",
             "/daq/tt/rf","/daq/tt/bmt","/daq/tt/fmt","/daq/tt/rich2","/daq/tt/hel","/daq/tt/band","/daq/tt/rtpc",
-            "/daq/tt/raster","/daq/tt/atof2"
+            "/daq/tt/raster","/daq/tt/atof"
         });
         translationManager.init(keysTrans,tablesTrans);
         
