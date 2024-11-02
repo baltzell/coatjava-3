@@ -191,7 +191,6 @@ public class TracksFromTargetRec {
         kf2.polarity = (int) Math.signum(Constants.getSolenoidScale());
         Measurements measure = new Measurements(xb, yb, Constants.getInstance().kfBeamSpotConstraint());
         for (Seed seed : this.CVTseeds) { 
-            measure.setSeed(seed);
             if(seed.getId()<0) continue;
             int pid = elossPid;
             //seed.update_Crosses();

@@ -16,6 +16,7 @@ import org.jlab.geometry.prim.Line3d;
 import org.jlab.rec.cvt.Constants;
 import org.jlab.rec.cvt.Geometry;
 import org.jlab.rec.cvt.bmt.BMTGeometry;
+import org.jlab.rec.cvt.bmt.BMTType;
 import org.jlab.rec.cvt.cluster.Cluster;
 import org.jlab.rec.cvt.svt.SVTGeometry;
 import org.jlab.rec.cvt.track.Seed;
@@ -254,12 +255,12 @@ public class Measurements {
     }
 
     private void addClusters(Seed seed) {
-        this.addClusters(DetectorType.BST, this.getClusterSurfaces(DetectorType.BST, seed.getClusters()));
-        this.addClusters(DetectorType.BMT, this.getClusterSurfaces(DetectorType.BMT, seed.getClusters()));
+        this.addClusters(DetectorType.BST, this.getClusterSurfaces(DetectorType.BST, seed.getClusters(), seed));
+        this.addClusters(DetectorType.BMT, this.getClusterSurfaces(DetectorType.BMT, seed.getClusters(), seed));
     }
     
     private void addClusters(StraightTrack cosmic) {
-        this.addClusters(DetectorType.BST, this.getClusterSurfaces(DetectorType.BST, cosmic.getClusters()));
+        this.addClusters(DetectorType.BST, this.getClusterSurfaces(DetectorType.BST, cosmic.getClusters(), cosmic.getRay()));
         this.addClusters(DetectorType.BMT, this.getClusterSurfaces(DetectorType.BMT, cosmic.getClusters(), cosmic.getRay()));
     }
 
@@ -283,34 +284,32 @@ public class Measurements {
         
     private List<Surface> getClusterSurfaces(DetectorType type, List<Cluster> clusters, Ray ray) {
         
-        List<Surface> surfaces = this.getClusterSurfaces(type, clusters);        
+        List<Surface> surfaces = this.getClusterSurfaces(type, clusters, ray);        
         for(Surface surf : surfaces) {
             surf.hemisphere = this.getHemisphere(ray, surf); 
         }
         return surfaces;
     }
     
-    private List<Surface> getClusterSurfaces(DetectorType type, List<Cluster> clusters) {
-        List<Surface> surfaces = new ArrayList<>();
+    private List<Surface> getClusterSurfaces(DetectorType type, List<Cluster> clusters, Seed seed) {
         
+        List<Surface> surfaces = new ArrayList<>();        
         for(Cluster cluster : clusters) {
-            if(cluster.getDetector()!=type) continue;
-            int layer = MLayer.getType(type, cluster.getLayer()).getCVTLayer();
-            Surface measure = cluster.measurement();
-            if(cluster.getDetector()==DetectorType.BMT) {
-                if(this.getSeed()!=null) {
-                    double r = cluster.getRadius();
-                    Point3D vAtR = this.getSeed().getHelix().getPointAtRadius(r);
-                    measure.hemisphere = Math.signum(vAtR.y());
-                }
-            } else {
-                measure.hemisphere = Math.signum(cluster.center().y()); 
+            Surface surf = this.getClusterSurface(type, cluster);
+            if(surf!=null) {
+                surf.hemisphere = this.getHemisphere(cluster, seed, surf);
+                surfaces.add(surf);
             }
-            if((int)Constants.getInstance().getUsedLayers().get(layer)<1)
-                measure.passive=true;
-            surfaces.add(measure);
         }
         return surfaces;
+    }
+    private Surface getClusterSurface(DetectorType type, Cluster cluster) {
+        if(cluster.getDetector()!=type) return null;
+        int layer = MLayer.getType(type, cluster.getLayer()).getCVTLayer();
+        Surface surface = cluster.measurement();
+        if((int)Constants.getInstance().getUsedLayers().get(layer)<1)
+            surface.passive=true;
+        return surface;
     }
     
     private void addMissing(Seed seed) {
@@ -445,7 +444,19 @@ public class Measurements {
         else 
             return 0;
     }
-    
+    private int getHemisphere(Cluster cluster, Seed seed, Surface surface) {
+        if(surface.cylinder==null)
+            return 0;
+        if(cluster.getType()==BMTType.C) {
+            if(seed==null)
+                return 0;
+            double r = cluster.getRadius();
+            Point3D vAtR = seed.getHelix().getPointAtRadius(r);
+            return (int) Math.signum(vAtR.y());
+        } else {
+            return (int) Math.signum(cluster.center().y()); 
+        }
+    }
     private void reset() {
         for(int i=0; i<cvtSurfaces.length; i++) {
             int hemisphere = MLayer.getHemisphere(i);
@@ -459,17 +470,5 @@ public class Measurements {
         }
     }
 
-    /**
-     * @return the _seed
-     */
-    public Seed getSeed() {
-        return _seed;
-    }
-
-    /**
-     * @param _seed the _seed to set
-     */
-    public void setSeed(Seed _seed) {
-        this._seed = _seed;
-    }
+    
 }
