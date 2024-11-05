@@ -164,7 +164,7 @@ public abstract class HipoExtractor implements IExtractor {
 	 * They are inspired by the MVTFitter.java, the previous 
 	 * decoding for BMT.
 	 *
-	 * Can be imrpoved !
+	 * Can be improved !
 	 *
 	 * Any questions : @ftouchte
 	 */
@@ -333,9 +333,6 @@ public abstract class HipoExtractor implements IExtractor {
 					slopeRise = samplesCorr[binRise+1] - samplesCorr[binRise];
 			float fittedBinRise = (slopeRise == 0) ? binRise : binRise + (threshold - samplesCorr[binRise])/slopeRise;
 			timeRiseCFA = (fittedBinRise + binOffset)*samplingTime; // binOffset is determined in wavefromCorrection() // must be the same for all time ? // or must be defined using fittedBinRise*sparseSample
-			System.out.println("**** binRise : " + binRise);
-			System.out.println("**** fittedBinRise : " + fittedBinRise);
-			System.out.println("**** slopeRise : " + slopeRise);
 
 			// timeFallCFA
 			int binFall = binMax;
