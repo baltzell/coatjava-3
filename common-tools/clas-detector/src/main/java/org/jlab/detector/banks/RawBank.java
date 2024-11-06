@@ -80,8 +80,14 @@ public class RawBank extends FilteredBank {
         private final int rawOrderId;
         private OrderType(int id){ rawOrderId = id; }
         public int getTypeId() { return rawOrderId; }
+        public static OrderType getType(int order) {
+            for(OrderType t : OrderType.values())
+                if(t.rawOrderId == order-order%10)
+                    return t;
+            return null;
+        }
     }
-
+    
     public static final String FILTER_VAR_NAME = "order"; 
 
     public RawBank(Schema sch){

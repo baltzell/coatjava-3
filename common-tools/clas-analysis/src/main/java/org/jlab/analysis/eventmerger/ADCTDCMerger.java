@@ -487,9 +487,12 @@ public class ADCTDCMerger {
         public DGTZ(DetectorType detector, byte sector, byte layer, short component, byte order) {
             super(detector);
             this.setSectorLayerComponent(sector, layer, component);
-            this.setOrder(order);
-            this.removed    = false;
-            this.background = false;
+            OrderType type = OrderType.getType(order);
+            this.setOrder(order - type.getTypeId());
+            if(type==OrderType.BGREMOVED) 
+                this.removed    = true;
+            if(type==OrderType.BGADDED_NOMINAL) 
+                this.background = true;
         }
 
         public boolean isGood() {
@@ -528,11 +531,11 @@ public class ADCTDCMerger {
 
         public RawBank.OrderType getOrderType() {
             if(this.isBackground())
-                return RawBank.OrderType.BGADDED_NOMINAL;
+                return OrderType.BGADDED_NOMINAL;
             else if(this.isRemoved())
-                return RawBank.OrderType.BGREMOVED;
+                return OrderType.BGREMOVED;
             else
-                return RawBank.OrderType.NOMINAL;
+                return OrderType.NOMINAL;
 
         }
 
