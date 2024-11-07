@@ -1,4 +1,5 @@
 package org.jlab.analysis.eventmerger;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -38,7 +39,11 @@ public class EventMerger {
     private List<DetectorType> detectors;
     private OrderType[] orders;
     
-
+    private List<String> bgFileNames;
+    private boolean reuseBgEvents = false;
+    private int bgFileIndex = 0;
+    private HipoDataSource bgReader;
+    
     public EventMerger() {
         detectors = Arrays.asList(DetectorType.DC, DetectorType.FTOF);
         orders = this.getOrders(OrderType.NOMINAL.name(),OrderType.BGADDED_NOMINAL.name(),OrderType.BGREMOVED.name());
@@ -80,6 +85,46 @@ public class EventMerger {
         return null;
     }
     
+    public boolean setBgFiles(List<String> filenames, boolean reuse) {
+        bgFileNames = filenames;
+        for (String filename : filenames) {
+            File f = new File(filename);
+            if (!f.exists() || !f.isFile() || !f.canRead()) {
+                Logger.getLogger(EventMerger.class.getName()).log(Level.SEVERE,"Background filename {0} invalid.",filename);
+                return false;
+            }
+            Logger.getLogger(EventMerger.class.getName()).log(Level.INFO,"Background files: reading {0}",filename);
+            bgFileNames.add(filename);
+        }        
+        reuseBgEvents = reuse;
+        return true;
+    } 
+    
+    private boolean openNextFile() {
+        if(bgFileIndex == bgFileNames.size()) {
+            if (reuseBgEvents) {
+                Logger.getLogger(EventMerger.class.getName()).info("Reopening previously used background file");
+                bgFileIndex = 0;
+            }
+            else {
+                Logger.getLogger(EventMerger.class.getName()).info("Ran out of background events");
+                return false;
+            }
+        }
+        bgReader = new HipoDataSource();
+        bgReader.open(bgFileNames.get(bgFileIndex));
+        bgFileIndex++;
+        return true;
+    }
+
+    synchronized public DataEvent getBackgroundEvent() {
+        if (!bgReader.hasEvent()) {
+            if(!openNextFile())
+                return null;
+        }
+        return bgReader.getNextEvent();
+    }
+    
     private void printConfiguration() {
         System.out.println("Double hits suppression flag set to " + suppressDoubleHits);
         System.out.println("Preserve hit list order flag set to " + preserveHitOrder);
@@ -94,19 +139,12 @@ public class EventMerger {
     }
     
     private void printOrders() {
-        System.out.print("\nSAving hits for the following categories: ");
+        System.out.print("\nSaving hits for the following categories: ");
         for(OrderType order : orders) System.out.print(order.name()+ " ");
         System.out.println("\n");
     }
     
-    /**
-     * Append merged banks to hipo event
-     * 
-     * @param event
-     * @param bg1
-     * @param bg2
-     */
-    public void mergeEvents(DataEvent event, DataEvent bg1, DataEvent bg2) {
+    private void mergeEvents(DataEvent event, DataEvent bg1, DataEvent bg2) {
         
         if(!event.hasBank("RUN::config") || !bg1.hasBank("RUN::config") || !bg2.hasBank("RUN::config")) {
             return;
@@ -141,17 +179,33 @@ public class EventMerger {
         }
     }
     
+    /**
+     * Append merged banks to hipo event
+     * 
+     * @param event
+     */
+    public boolean mergeEvents(DataEvent event) {
+           
+        DataEvent eventBg1 = this.getBackgroundEvent();
+        DataEvent eventBg2 = this.getBackgroundEvent();
+                
+        if(eventBg1==null || eventBg2==null) return false;
+                
+        this.mergeEvents(event, eventBg1, eventBg2);
+        return true;
+    }
+
     public static void main(String[] args)  {
 
         DefaultLogger.debug();
 
         OptionParser parser = new OptionParser("bg-merger");
         parser.addRequired("-o"    ,"merged file");
-        parser.addRequired("-i"    ,"input data file");
-        parser.addRequired("-b"    ,"background file");
-        parser.setRequiresInputList(false);
+        parser.addRequired("-i"    ,"signal event file");
+        parser.setRequiresInputList(true);
         parser.addOption("-n"    ,"-1", "maximum number of events to process");
         parser.addOption("-d"    ,"DC,FTOF", "list of detectors, for example \"DC,FTOF,HTCC\" or \"ALL\" for all available detectors");
+        parser.addOption("-r"    ,"1", "reuse background events: 0-false, 1-true");
         parser.addOption("-s"    ,"1", "suppress double TDC hits on the same component, 0-no suppression, 1-suppression");
         parser.addOption("-l"    ,"1", "preserve initial hit order (for compatibility with truth matching, 0-false, 1-true");
         parser.addOption("-t"    ,"NOMINAL,BGADDED_NOMINAL,BGREMOVED", "list of hit OrderTypes to be saved");
@@ -161,42 +215,44 @@ public class EventMerger {
 
             String dataFile   = parser.getOption("-i").stringValue();
             String outputFile = parser.getOption("-o").stringValue();
-            String bgFile     = parser.getOption("-b").stringValue();
+            List<String> bgFiles = parser.getInputList();
             
             int     maxEvents   = parser.getOption("-n").intValue();
             String  detectors   = parser.getOption("-d").stringValue();
             String  ordertypes  = parser.getOption("-t").stringValue();
             boolean doubleHits  = (parser.getOption("-s").intValue()==1);
+            boolean reuseBG     = (parser.getOption("-r").intValue()==1);
             boolean hitOrder    = (parser.getOption("-l").intValue()==1);
             
+            
             EventMerger merger = new EventMerger(detectors.split(","),ordertypes.split(","),doubleHits,hitOrder);
-
+            if(!merger.setBgFiles(bgFiles, reuseBG))
+                System.exit(1);
+                
             int counter = 0;
 
-            // Readers for event and background
+            // Reader for signal events
             HipoDataSource readerData = new HipoDataSource();
             readerData.open(dataFile);
-            HipoDataSource readerBg = new HipoDataSource();
-            readerBg.open(bgFile);
-
+            
             //Writer
             HipoDataSync writer = new HipoDataSync();
             writer.setCompressionType(2);
             writer.open(outputFile);
             
             ProgressPrintout  progress = new ProgressPrintout();
-            while (readerData.hasEvent()&& readerBg.hasEvent()) {
+            while (readerData.hasEvent()) {
 
                 counter++;
 
                 //System.out.println("************************************************************* ");
                 DataEvent eventData = readerData.getNextEvent();
-                DataEvent eventBg1  = readerBg.getNextEvent();
-                if(!readerBg.hasEvent()) break;
-                DataEvent eventBg2  = readerBg.getNextEvent();
                 
-                merger.mergeEvents(eventData, eventBg1, eventBg2);
-                writer.writeEvent(eventData);
+                if(merger.mergeEvents(eventData))
+                    writer.writeEvent(eventData);
+                else
+                    maxEvents = counter;
+                
                 progress.updateStatus();
                 if(maxEvents>0){
                     if(counter>=maxEvents) break;
