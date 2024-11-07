@@ -487,6 +487,10 @@ public class ADCTDCMerger {
         public DGTZ(DetectorType detector, byte sector, byte layer, short component, byte order) {
             super(detector);
             this.setSectorLayerComponent(sector, layer, component);
+            this.setOrderAndType(order);
+        }
+
+        public void setOrderAndType(int order) {
             OrderType type = OrderType.getType(order);
             this.setOrder(order - type.getTypeId());
             if(type==OrderType.BGREMOVED) 
@@ -494,7 +498,7 @@ public class ADCTDCMerger {
             if(type==OrderType.BGADDED_NOMINAL) 
                 this.background = true;
         }
-
+        
         public boolean isGood() {
             return true;
         }
@@ -556,7 +560,7 @@ public class ADCTDCMerger {
             short component = bank.getShort("component", row);
             byte order      = bank.getByte("order",      row);
             this.setSectorLayerComponent(sector, layer, component);
-            this.setOrder(order);
+            this.setOrderAndType(order);
         }
 
         public boolean pilesUp(DGTZ o){
