@@ -28,8 +28,8 @@ public class ADCTDCMerger {
     private OrderType[] selectedOrders = {OrderType.NOMINAL, OrderType.BGADDED_NOMINAL, OrderType.BGREMOVED};
     private EventMergerConstants constants;
             
-    private DataEvent       event;
-    private List<DataEvent> bgEvents;
+    private DataEvent         event;
+    private List<DataEvent[]> bgEvents;
     private int run;
     
     /**
@@ -39,13 +39,13 @@ public class ADCTDCMerger {
      * @param signal physics events
      * @param bgs background events
      */
-    public ADCTDCMerger(EventMergerConstants constants, DataEvent signal, DataEvent... bgs) {
+    public ADCTDCMerger(EventMergerConstants constants, DataEvent signal, DataEvent[]... bgs) {
         this.constants = constants;
         this.event = signal;
         this.bgEvents = new ArrayList<>();
         this.bgEvents.addAll(Arrays.asList(bgs));
-        if(!bgEvents.isEmpty() && bgEvents.get(0).hasBank("RUN::config"))
-            run = bgEvents.get(0).getBank("RUN::config").getInt("run", 0);                
+        if(!bgEvents.isEmpty() && bgEvents.get(0)[0].hasBank("RUN::config"))
+            run = bgEvents.get(0)[0].getBank("RUN::config").getInt("run", 0);                
     }
 
     /**
@@ -131,20 +131,25 @@ public class ADCTDCMerger {
      */
     public DataBank mergeADCs(DetectorType detector){
         
-        DataEvent bg = bgEvents.get(0);
+        DataEvent[] bgs = bgEvents.get(0);
 
         String ADCString = detector.getName()+"::adc";
-        if(!bg.hasBank(ADCString)) {
-            return event.getBank(ADCString);
+        for(DataEvent bg : bgs) {
+            if(!bg.hasBank(ADCString)) {
+                return event.getBank(ADCString);
+            }
         }
-        else {
-            List<DGTZ> bgADCs  = readADCs(detector,bg.getBank(ADCString));
-            List<DGTZ> ADCs    = readADCs(detector,event.getBank(ADCString));
 
-            DataBank bank = this.writeToBank(event, ADCString, this.merge(ADCs, bgADCs));
-
-            return bank;
+        List<DGTZ> bgADCs = new ArrayList<>();
+        for(DataEvent bg : bgs) {
+            bgADCs.addAll(readADCs(detector,bg.getBank(ADCString)));
         }
+        List<DGTZ> ADCs    = readADCs(detector,event.getBank(ADCString));
+
+        DataBank bank = this.writeToBank(event, ADCString, this.merge(ADCs, bgADCs));
+
+        return bank;
+
     }
     
     /**
@@ -157,21 +162,24 @@ public class ADCTDCMerger {
      */
     public DataBank mergeTDCs(DetectorType detector){
         
+        DataEvent[] bgs = bgEvents.get(0);
+
         String TDCString = detector+"::tdc";
         
         // if the primary background event has no detector bank then keep the event bank
-        if(!bgEvents.get(0).hasBank(TDCString)) {
-            return event.getBank(TDCString);
+        for(DataEvent bg : bgs) {
+            if(!bg.hasBank(TDCString)) {
+                return event.getBank(TDCString);
+            }
         }
-        // if the primary background events has the detector bank, then proceed with merging
-        else {                    
-            // get background hits using multiple events dependending on detector
-            int bgSize = constants.getInt(detector, EventMergerEnum.MERGE_SIZE);
-            if(!event.hasBank(TDCString)) bgSize = 1;
-            // collect bg hits
-            List<DGTZ> bgTDCs = new ArrayList<>();
-            for(int i=0; i<Math.min(bgSize, bgEvents.size()); i++) {
-                DataEvent bg = bgEvents.get(i);
+        // if the primary background events has the detector bank, then proceed with merging                 
+        // get background hits using multiple events dependending on detector
+        int bgSize = constants.getInt(detector, EventMergerEnum.MERGE_SIZE);
+        if(!event.hasBank(TDCString)) bgSize = 1;
+        // collect bg hits
+        List<DGTZ> bgTDCs = new ArrayList<>();
+        for(int i=0; i<Math.min(bgSize, bgEvents.size()); i++) {
+            for(DataEvent bg : bgEvents.get(i)) {
                 if(bg.hasBank(TDCString)) {
                     // get TDCs, correct them for jitter and shift them in time
                     int jitter = this.getTDCJitter(detector, bg);
@@ -185,16 +193,17 @@ public class ADCTDCMerger {
                     } 
                 }
             }
-            
-            // get physics event hits hits
-            List<DGTZ> TDCs = readTDCs(detector, event.getBank(TDCString));
-
-            // merge physics and bg hit
-            List<DGTZ> mergedTDCs = this.merge(TDCs, bgTDCs);
-            
-            // create output bank
-            return this.writeToBank(event, TDCString, mergedTDCs);
         }
+
+        // get physics event hits hits
+        List<DGTZ> TDCs = readTDCs(detector, event.getBank(TDCString));
+
+        // merge physics and bg hit
+        List<DGTZ> mergedTDCs = this.merge(TDCs, bgTDCs);
+
+        // create output bank
+        return this.writeToBank(event, TDCString, mergedTDCs);
+        
     }    
 
     /**
@@ -497,6 +506,10 @@ public class ADCTDCMerger {
                 this.removed    = true;
             if(type==OrderType.BGADDED_NOMINAL) 
                 this.background = true;
+            if(type==OrderType.BGREMOVED_BG) {
+                this.removed    = true;
+                this.background = true;                
+            }
         }
         
         public boolean isGood() {
@@ -522,8 +535,6 @@ public class ADCTDCMerger {
         public boolean status() {
             if(!this.isInTime())
                 return false;
-            else if(this.isBackground() && this.isRemoved())
-                return false;
             else {
                 for(OrderType o : selectedOrders) {
                     if(this.getOrderType()==o)
@@ -534,7 +545,9 @@ public class ADCTDCMerger {
         }
 
         public RawBank.OrderType getOrderType() {
-            if(this.isBackground())
+            if(this.isBackground() && this.isRemoved())
+                return OrderType.BGREMOVED_BG;
+            else if(this.isBackground())
                 return OrderType.BGADDED_NOMINAL;
             else if(this.isRemoved())
                 return OrderType.BGREMOVED;

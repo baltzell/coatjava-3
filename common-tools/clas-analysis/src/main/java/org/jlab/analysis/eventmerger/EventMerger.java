@@ -117,12 +117,16 @@ public class EventMerger {
         return true;
     }
 
-    synchronized public DataEvent getBackgroundEvent() {
-        if (!bgReader.hasEvent()) {
-            if(!openNextFile())
-                return null;
+    synchronized public DataEvent[] getBackgroundEvents(int n) {
+        DataEvent[] events = new DataEvent[n];
+        for(int i=0; i<n; i++) {
+            if (!bgReader.hasEvent()) {
+                if(!openNextFile())
+                    return null;
+            }
+            events[i] = bgReader.getNextEvent();
         }
-        return bgReader.getNextEvent();
+        return events;
     }
     
     private void printConfiguration() {
@@ -144,11 +148,15 @@ public class EventMerger {
         System.out.println("\n");
     }
     
-    private void mergeEvents(DataEvent event, DataEvent bg1, DataEvent bg2) {
+    private void mergeEvents(DataEvent event, DataEvent[] bg1, DataEvent[] bg2) {
         
-        if(!event.hasBank("RUN::config") || !bg1.hasBank("RUN::config") || !bg2.hasBank("RUN::config")) {
+        if(!event.hasBank("RUN::config"))
             return;
-        }
+        if(bg1.length != bg2.length)
+            return;
+        for(int i=0; i<bg1.length; i++)
+            if(!bg1[i].hasBank("RUN::config") || bg1[i].hasBank("RUN::config"))
+                return;
         
         if(event.hasBank("DC::doca")) event.removeBank("DC::doca");
         
@@ -183,11 +191,13 @@ public class EventMerger {
      * Append merged banks to hipo event
      * 
      * @param event
+     * @param nBgEvents
+     * @return 
      */
-    public boolean mergeEvents(DataEvent event) {
+    public boolean mergeEvents(DataEvent event, int nBgEvents) {
            
-        DataEvent eventBg1 = this.getBackgroundEvent();
-        DataEvent eventBg2 = this.getBackgroundEvent();
+        DataEvent[] eventBg1 = this.getBackgroundEvents(nBgEvents);
+        DataEvent[] eventBg2 = this.getBackgroundEvents(nBgEvents);
                 
         if(eventBg1==null || eventBg2==null) return false;
                 
@@ -208,7 +218,8 @@ public class EventMerger {
         parser.addOption("-r"    ,"1", "reuse background events: 0-false, 1-true");
         parser.addOption("-s"    ,"1", "suppress double TDC hits on the same component, 0-no suppression, 1-suppression");
         parser.addOption("-l"    ,"1", "preserve initial hit order (for compatibility with truth matching, 0-false, 1-true");
-        parser.addOption("-t"    ,"NOMINAL,BGADDED_NOMINAL,BGREMOVED", "list of hit OrderTypes to be saved");
+        parser.addOption("-t"    ,"NOMINAL,BGADDED_NOMINAL,BGREMOVED,BGREMOVED_BG", "list of hit OrderTypes to be saved");
+        parser.addOption("-x"    ,"1", "background scale factor");
         parser.parse(args);
         
         if(parser.hasOption("-i") && parser.hasOption("-o")){
@@ -221,6 +232,7 @@ public class EventMerger {
             String  detectors   = parser.getOption("-d").stringValue();
             String  ordertypes  = parser.getOption("-t").stringValue();
             boolean doubleHits  = (parser.getOption("-s").intValue()==1);
+            int     nBG         = parser.getOption("-x").intValue();
             boolean reuseBG     = (parser.getOption("-r").intValue()==1);
             boolean hitOrder    = (parser.getOption("-l").intValue()==1);
             
@@ -248,7 +260,7 @@ public class EventMerger {
                 //System.out.println("************************************************************* ");
                 DataEvent eventData = readerData.getNextEvent();
                 
-                if(merger.mergeEvents(eventData))
+                if(merger.mergeEvents(eventData, nBG))
                     writer.writeEvent(eventData);
                 else
                     maxEvents = counter;

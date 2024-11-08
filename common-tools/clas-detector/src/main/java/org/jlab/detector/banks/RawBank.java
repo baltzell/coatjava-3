@@ -67,7 +67,7 @@ public class RawBank extends FilteredBank {
         NOMINAL         (  0),  // normal hits retained by denoising level-0
         BGADDED_NOMINAL ( 10),  // hits added by background merging and retained by level-0
         BGREMOVED       ( 20),  // hits removed during background merging 
-        RESERVED        ( 30),  // reserved for later use
+        BGREMOVED_BG    ( 30),  // background hits removed by background merging
         NOISE1          ( 40),  // normal hits retained by level-1 denoising
         NOISE2          ( 50),  // normal hits retained by level-2 denoising
         NOISE3          ( 60),  // normal hits retained by level-3 denoising
