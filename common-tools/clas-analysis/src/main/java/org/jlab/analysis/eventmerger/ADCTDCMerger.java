@@ -29,7 +29,7 @@ public class ADCTDCMerger {
     private EventMergerConstants constants;
             
     private DataEvent         event;
-    private List<DataEvent[]> bgEvents;
+    private List<DataEvent>[] bgEvents;
     private int run;
     
     /**
@@ -39,13 +39,12 @@ public class ADCTDCMerger {
      * @param signal physics events
      * @param bgs background events
      */
-    public ADCTDCMerger(EventMergerConstants constants, DataEvent signal, DataEvent[]... bgs) {
+    public ADCTDCMerger(EventMergerConstants constants, DataEvent signal, List<DataEvent>... bgs) {
         this.constants = constants;
         this.event = signal;
-        this.bgEvents = new ArrayList<>();
-        this.bgEvents.addAll(Arrays.asList(bgs));
-        if(!bgEvents.isEmpty() && bgEvents.get(0)[0].hasBank("RUN::config"))
-            run = bgEvents.get(0)[0].getBank("RUN::config").getInt("run", 0);                
+        this.bgEvents = bgs;
+        if(bgEvents.length!=0 && !bgEvents[0].isEmpty() && bgEvents[0].get(0).hasBank("RUN::config"))
+            run = bgEvents[0].get(0).getBank("RUN::config").getInt("run", 0);                
     }
 
     /**
@@ -122,16 +121,17 @@ public class ADCTDCMerger {
     }
     
     /**
-     * Merge ADC banks for data (signal) and background events for selected detector
+     * Merge ADC banks for data (signal) and background events for the selected detector and layers
      * In case of multiple hit on same detector element, only first hit in time is kept 
      * unless the double-hit suppression flag, suppressDoubleHits, is set to false
      *
      * @param detector
+     * @param layers
      * @return
      */
-    public DataBank mergeADCs(DetectorType detector){
+    public DataBank mergeADCs(DetectorType detector, List<Integer> layers){
         
-        DataEvent[] bgs = bgEvents.get(0);
+        List<DataEvent> bgs = bgEvents[0];
 
         String ADCString = detector.getName()+"::adc";
         for(DataEvent bg : bgs) {
@@ -142,7 +142,10 @@ public class ADCTDCMerger {
 
         List<DGTZ> bgADCs = new ArrayList<>();
         for(DataEvent bg : bgs) {
-            bgADCs.addAll(readADCs(detector,bg.getBank(ADCString)));
+            for(DGTZ dgtz : readADCs(detector,bg.getBank(ADCString))) {
+                if(layers==null || layers.contains(dgtz.getLayer()))
+                    bgADCs.add((ADC) dgtz);
+            }
         }
         List<DGTZ> ADCs    = readADCs(detector,event.getBank(ADCString));
 
@@ -153,16 +156,17 @@ public class ADCTDCMerger {
     }
     
     /**
-     * Merge TDC banks for data (signal) and background events for selected detector
+     * Merge TDC banks for data (signal) and background events for the selected detector and layers
      * Use two background events shifted in time to extend the time range of the backgrounds
      * Multiple hits on the same components are kept if time distance exceed the holdoff time
      * 
      * @param detector
+     * @param layers
      * @return
      */
-    public DataBank mergeTDCs(DetectorType detector){
+    public DataBank mergeTDCs(DetectorType detector, List<Integer> layers){
         
-        DataEvent[] bgs = bgEvents.get(0);
+        List<DataEvent> bgs = bgEvents[0];
 
         String TDCString = detector+"::tdc";
         
@@ -178,8 +182,8 @@ public class ADCTDCMerger {
         if(!event.hasBank(TDCString)) bgSize = 1;
         // collect bg hits
         List<DGTZ> bgTDCs = new ArrayList<>();
-        for(int i=0; i<Math.min(bgSize, bgEvents.size()); i++) {
-            for(DataEvent bg : bgEvents.get(i)) {
+        for(int i=0; i<Math.min(bgSize, bgEvents.length); i++) {
+            for(DataEvent bg : bgEvents[i]) {
                 if(bg.hasBank(TDCString)) {
                     // get TDCs, correct them for jitter and shift them in time
                     int jitter = this.getTDCJitter(detector, bg);
@@ -187,10 +191,12 @@ public class ADCTDCMerger {
                         TDC tdc = (TDC) dgtz;
                         int layer  = tdc.getLayer();
                         int comp   = tdc.getComponent();
-                        int offset = constants.getInt(run, detector, EventMergerEnum.READOUT_WINDOW, 0, layer, comp);
-                        tdc.shift(jitter-i*offset);
-                        bgTDCs.add(tdc);
-                    } 
+                        if(layers==null || layers.contains(layer)) {
+                            int offset = constants.getInt(run, detector, EventMergerEnum.READOUT_WINDOW, 0, layer, comp);
+                            tdc.shift(jitter-i*offset);
+                            bgTDCs.add(tdc);
+                        } 
+                    }
                 }
             }
         }

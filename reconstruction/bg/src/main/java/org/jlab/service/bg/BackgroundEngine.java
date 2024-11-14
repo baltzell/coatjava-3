@@ -22,6 +22,7 @@ public class BackgroundEngine extends ReconstructionEngine {
     public static final String CONF_SUPPRESS_DOUBLES = "suppressDoubles";
     public static final String CONF_PRESERVE_ORDER = "preserveOrder";
     public static final String CONF_REUSE_EVENTS = "reuseEvents";
+    public static final String CONF_BG_SCALE = "bgScale";
 
     static final Logger logger = Logger.getLogger(BackgroundEngine.class.getName());
 
@@ -45,8 +46,9 @@ public class BackgroundEngine extends ReconstructionEngine {
         boolean suppressDoubles = Boolean.valueOf(getEngineConfigString(CONF_SUPPRESS_DOUBLES,"true"));
         boolean preserveOrder = Boolean.valueOf(getEngineConfigString(CONF_PRESERVE_ORDER,"true"));
         boolean reuseEvents = Boolean.valueOf(getEngineConfigString(CONF_REUSE_EVENTS,"false"));
+        int     bgScale = Integer.valueOf(getEngineConfigString(CONF_BG_SCALE,"1"));
         bgmerger = new EventMerger(detectors.split(","), orders.split(","), suppressDoubles, preserveOrder);
-        return bgmerger.setBgFiles(Arrays.asList(filenames), reuseEvents);
+        return bgmerger.setBgFiles(Arrays.asList(filenames), bgScale, reuseEvents);
     }
 
     @Override
