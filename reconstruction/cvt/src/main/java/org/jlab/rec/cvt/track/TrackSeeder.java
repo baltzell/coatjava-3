@@ -67,8 +67,8 @@ public class TrackSeeder {
             //System.out.println(seed.toString()+" "+seed.isGood());
             for (Cross c : othercrs ) { 
                 if(this.inSamePhiRange(seed, c)== true) {
-                    double xi = c.getPoint().x(); 
-                    double yi = c.getPoint().y();
+                    double xi = c.getPoint().x()-xbeam; 
+                    double yi = c.getPoint().y()-ybeam;
                     double ri = Math.sqrt(xi*xi+yi*yi);
                     double fi = Math.atan2(yi,xi) ;
 
@@ -103,7 +103,7 @@ public class TrackSeeder {
             Ys.add(c.getPoint().y());
             Ws.add(1. / (c.getPointErr().x()*c.getPointErr().x()+c.getPointErr().y()*c.getPointErr().y()));
             
-        }
+        } 
         CircleFitter circlefit = new CircleFitter(xbeam, ybeam);
         boolean circlefitstatusOK = circlefit.fitStatus(Xs, Ys, Ws, Xs.size());
         CircleFitPars pars = circlefit.getFit(); 
@@ -114,14 +114,17 @@ public class TrackSeeder {
         double f = pars.phi();
         boolean failed = false;
         for (Cross c : seedcrs ) { 
-            double xi = c.getPoint().x(); 
-            double yi = c.getPoint().y();
+            double xi = c.getPoint().x()-xbeam; 
+            double yi = c.getPoint().y()-ybeam;
             double ri = Math.sqrt(xi*xi+yi*yi);
             double fi = Math.atan2(yi,xi) ;
             
             double res = this.calcResi(r, ri, d, f, fi);
             if(Math.abs(res)>SVTParameters.RESIMAX) { 
                 failed = true;
+                if(Constants.getInstance().seedingDebugMode) {
+                    System.out.println("SSA faailing on "+c.printInfo()+" with resi "+Math.abs(res)+" larger than "+SVTParameters.RESIMAX);
+                }
                 return;
             }
         }
@@ -300,8 +303,8 @@ public class TrackSeeder {
                     mseed.setRho(r);
                     mseed.setPhi(f);
                     for (Cross c : seedcrs) {
-                        double xi = c.getPoint().x();
-                        double yi = c.getPoint().y();
+                        double xi = c.getPoint().x()-xbeam;
+                        double yi = c.getPoint().y()-ybeam;
                         double ri = Math.sqrt(xi * xi + yi * yi);
                         double fi = Math.atan2(yi, xi);
                         double res = this.calcResi(r, ri, d, f, fi);

@@ -58,7 +58,7 @@ public class TracksFromTargetRec {
     private double xb; 
     private double yb;
     public int totTruthHits;
-    
+    public boolean oldStraightTrackSeeder=false;
     
     public TracksFromTargetRec(Swim swimmer, double[] beamPos) {
         this.swimmer = swimmer;
@@ -77,9 +77,9 @@ public class TracksFromTargetRec {
         double solenoidValue = Constants.getSolenoidMagnitude(); // already the absolute value
         List<Seed> seeds = new ArrayList<>();
         // make list of crosses consistent with a track candidate
-        if(solenoidValue<0.001) {
+        if(oldStraightTrackSeeder) {
             StraightTrackSeeder trseed = new StraightTrackSeeder(xb, yb);
-            seeds = trseed.findSeed(this.SVTcrosses, this.BMTcrosses, Constants.getInstance().svtOnly);
+            seeds = trseed.findSeed(this.SVTcrosses, this.BMTcrosses, Constants.getInstance().svtOnly, xb, yb);
             // RDV, disabled because it seems to create fake tracks, skipping measurement in KF
 //            if(Constants.getInstance().EXCLUDELAYERS==true) {
 //                seeds = recUtil.reFit(seeds, swimmer, trseed); // RDV can we juts refit?
@@ -208,8 +208,11 @@ public class TracksFromTargetRec {
             List<Surface> surfaces = measure.getMeasurements(seed);
             
             if(pid==0) pid = this.getTrackPid(event, seed.getId()); 
-            Point3D  v = seed.getHelix().getVertex();
+            Point3D  v = seed.getHelix().getVertex(); 
             Vector3D p = seed.getHelix().getPXYZ(solenoidValue);
+            if(Constants.getInstance().seedingDebugMode)
+                System.out.println("Seed vtx = "+v.toString()+" Seed p = "+p.toString());
+            
             if(Constants.getInstance().preElossCorrection && pid!=Constants.DEFAULTPID) {
                 double pcorr = measure.getELoss(p.mag(), PDGDatabase.getParticleMass(pid));
                 p.scale(pcorr/p.mag());
@@ -233,7 +236,7 @@ public class TracksFromTargetRec {
             if(solenoidValue>0.001 && seed.getHelix().radius() <Constants.getInstance().getRCUT())    
                 continue;
             if(Constants.getInstance().seedingDebugMode)
-                System.out.println("initializing fitter...");
+                System.out.println("initializing fitter...for "+seed.toString());
             kf.init(hlx, cov, xb, yb, 0, surfaces, PDGDatabase.getParticleMass(pid));
             kf.runFitter();
             
@@ -241,7 +244,7 @@ public class TracksFromTargetRec {
                 System.out.println("KF status ... failed "+kf.setFitFailed+" ndf "+kf.NDF+" helix "+kf.getHelix());
             if (kf.setFitFailed == false && kf.NDF>=0 && kf.getHelix()!=null) { 
                 Track fittedTrack = new Track(seed, kf, pid);
-                fittedTrack.update_Crosses(seed.getId());
+                fittedTrack.update_Crosses(seed.getId(), xb, yb);
                 for(Cross c : fittedTrack) { 
                     if(c.getDetector()==DetectorType.BST) {
                         if(c.getCluster1()!=null)
@@ -250,12 +253,14 @@ public class TracksFromTargetRec {
                             c.getCluster2().setAssociatedTrackID(0);
                     }
                 }
-                
+
+                if(Constants.getInstance().seedingDebugMode)
+                    System.out.println("KF vtx = "+fittedTrack.getSecondaryHelix().getVertex().toString());
                 if (searchMissingCls) { 
                     //refit adding missing clusters
                     List<Cluster> clsOnTrack = recUtil.findClustersOnTrk(this.SVTclusters, seed.getClusters(), fittedTrack, swimmer); //VZ: finds missing clusters; RDV fix 0 error
-                    
-                    List<Cross> crsOnTrack = recUtil.findCrossesFromClustersOnTrk(this.SVTcrosses, clsOnTrack, fittedTrack);
+
+                    List<Cross> crsOnTrack = recUtil.findCrossesFromClustersOnTrk(this.SVTcrosses, clsOnTrack, fittedTrack, xb, yb);
                     
                     for(Cluster cl : clsOnTrack) {
                         if(cl.getAssociatedCrossID()==-1) {//make a pseudocross
@@ -263,6 +268,7 @@ public class TracksFromTargetRec {
                         }
                     }
                     this.SVTaddedcrosses.addAll(crsOnTrack);
+
                     List<Cluster> bmtclsOnTrack = recUtil.findBMTClustersOnTrk(this.BMTclusters, seed.getCrosses(), fittedTrack.getHelix(),
                             fittedTrack.getP(), fittedTrack.getQ(), swimmer); //VZ: finds missing clusters
                     List<Cross> bmtcrsOnTrack = recUtil.findCrossesOnBMTTrack(this.BMTcrosses, bmtclsOnTrack);
@@ -322,11 +328,7 @@ public class TracksFromTargetRec {
                         fittedTrack = recUtil.recovTrkMisClusSearch(seed, hlx, cov, kf2, kf, pid, surfaces, xb, yb,
                             this.SVTclusters, this.SVTcrosses, 
                             swimmer, solenoidScale, solenoidValue, measure);
-//                        if(fittedTrack!=null) {
-//                            fittedTrack.setStatus(1); 
-//                            if(Constants.getInstance().seedingDebugMode) 
-//                                System.out.println("RECOVERED..."+fittedTrack.toString());
-//                        } 
+
                     } 
                     if((Constants.getInstance().KFfailRecovMisCls && fittedTrack==null) && !seed.isBad ){
                         //dump seed
@@ -343,18 +345,20 @@ public class TracksFromTargetRec {
                                         c.getCluster1().setAssociatedTrackID(0);
                                     if(c.getCluster2()!=null)
                                         c.getCluster2().setAssociatedTrackID(0);
+
                                 }
                             }
                         }
+                        if(fittedTrack!=null && this.missingSVTCrosses(fittedTrack) == false)
+                            tracks.add(fittedTrack);
                     }
+
                     if(fittedTrack!=null && this.missingSVTCrosses(fittedTrack) == false && !seed.isBad)
                         tracks.add(fittedTrack);
 
                 }
             }
         }
-    
-
         // reset cross and cluster IDs
         if(SVTcrosses!=null) {
             for(Cross c : this.SVTcrosses) {
@@ -391,7 +395,7 @@ public class TracksFromTargetRec {
                 int id = it + 1;
                 tracks.get(it).setId(id); 
                 tracks.get(it).findTrajectory(swimmer, Geometry.getInstance().geOuterSurfaces());
-                tracks.get(it).update_Crosses(id);
+                tracks.get(it).update_Crosses(id, xb, yb);
                 tracks.get(it).update_Clusters(id);
                 tracks.get(it).setTrackCovMat(recUtil.getCovMatInTrackRep(tracks.get(it)));
                 if(Constants.getInstance().seedingDebugMode) System.out.println("Fit " + tracks.get(it).toString());

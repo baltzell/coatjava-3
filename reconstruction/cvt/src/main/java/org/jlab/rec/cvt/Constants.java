@@ -54,7 +54,7 @@ public class Constants {
     public boolean   svtLinkerSeeding = false;
     public boolean   timeCuts = false;
     public boolean   bmtHVCuts = true;
-    public boolean   useOnlyTruthHits = true;
+    public boolean   useOnlyTruthHits = false;
     public boolean   useOnlyBMTTruthHits = false;
     public boolean   useOnlyBMTCTruthHits = false;
     public boolean   useOnlyBMTZTruthHits = false;

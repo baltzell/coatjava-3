@@ -1,7 +1,7 @@
 #!/bin/bash
 
 webDir=http://clasweb.jlab.org/clas12offline/distribution/coatjava/validation_files/eb
-webVersion=5.1-fid-r11
+webVersion=5.10-fid-r11
 webDir=$webDir/$webVersion
 
 # coatjava must already be built at ../../coatjava/
@@ -87,7 +87,7 @@ esac
 if [ $useClara -eq 0 ]
 then
     COAT=../../coatjava
-    source $COAT/bin/env.sh
+    source $COAT/libexec/env.sh
 else
     CLARA_HOME=$PWD/clara_installation/
     COAT=$CLARA_HOME/plugins/clas12/
@@ -117,11 +117,7 @@ then
         # install clara
         if ! [ -d clara_installation ]
         then
-            wget --no-check-certificate https://claraweb.jlab.org/clara/_downloads/install-claracre-clas.sh
-            chmod +x install-claracre-clas.sh
-            ./install-claracre-clas.sh -l local
-            if [ $? != 0 ] ; then echo "clara installation error" ; exit 1 ; fi
-            rm install-claracre-clas.sh
+            ../../install-clara clara_installation
         fi
     fi
 
