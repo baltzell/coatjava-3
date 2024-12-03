@@ -330,7 +330,7 @@ public class TracksFromTargetRec {
                             swimmer, solenoidScale, solenoidValue, measure);
 
                     } 
-                    if((Constants.getInstance().KFfailRecovMisCls && fittedTrack==null) && !seed.isBad ){
+                    if(fittedTrack==null && !seed.isBad ){
                         //dump seed
                         kf2.init(hlx, cov, xb, yb, 0, surfaces, PDGDatabase.getParticleMass(pid)); 
                         kf2.runFitterNoFiltFailSafe();
@@ -349,8 +349,6 @@ public class TracksFromTargetRec {
                                 }
                             }
                         }
-                        if(fittedTrack!=null && this.missingSVTCrosses(fittedTrack) == false)
-                            tracks.add(fittedTrack);
                     }
 
                     if(fittedTrack!=null && this.missingSVTCrosses(fittedTrack) == false && !seed.isBad)
