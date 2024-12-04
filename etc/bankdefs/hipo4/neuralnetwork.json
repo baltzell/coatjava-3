@@ -1,4 +1,23 @@
 [ 
+	{
+	    "name": "MLDC::dc",
+            "group": 4200,
+            "item" : 5,
+            "info": "bank with DC information to trina neural networks",
+            "entries": [
+		{"name":"id",    "type":"S",  "info":"the ID"},
+		{"name":"value", "type":"S",  "info":"value"} 
+            ]
+	},
+	{
+	    "name": "MLDC::tracks",
+            "group": 4200,
+            "item" : 6,
+            "info": "track information",
+            "entries": [
+		    {"name":"bytes",    "type":"B",  "info":"byte array of composite format"}
+        ]
+	},
     {
         "name": "nn::tracks",
         "group": 4200,
