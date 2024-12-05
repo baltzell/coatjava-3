@@ -24,7 +24,7 @@ coatjava_build:
 alert_testing:
   needs: ["coatjava_build"]
   variables:
-    REF_NAME: "$CI_COMMIT_REF_NAME "
+    REF_NAME: "$CI_COMMIT_REF_NAME"
   trigger:
     project: hallb/alert/c12
     strategy: depend
