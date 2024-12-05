@@ -28,9 +28,6 @@ public class MLDCEngine extends ReconstructionEngine {
     
     @Override
     public boolean init() {
-        
-       
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         return true;
     }
     
@@ -62,21 +59,7 @@ public class MLDCEngine extends ReconstructionEngine {
                 int id = (sector[j]-1)*(112*36) + (layer[j]-1)*112 + (wire[j]-1);
                 output.setShort("id", j, (short) id);
                 output.setShort("value", j, (short) tdc[j]);
-            }
-            //classifier.processBank(hipoBank.getBank());
-            
-            /*Clas12TrackAnalyzer analyzer = new Clas12TrackAnalyzer();
-            for(int sector = 1; sector <=6; sector++){
-                analyzer.readBank(hipoBank.getBank(), sector);
-                classifier.evaluate(analyzer.getCombinations());
-                //analyzer.getCombinations().analyze();
-                //System.out.println(analyzer.getCombinations());
-                classifier.evaluate5(analyzer.getCombinationsPartial());
-                analyzer.analyze();
-            }*/            
-            
-            //CompositeNode node =  new CompositeNode(32000,1,"sfssf3f3f6i6f6f",100000);            
-            
+            }          
             de.appendBank(output);
         }
         return true;
@@ -143,42 +126,4 @@ public class MLDCEngine extends ReconstructionEngine {
         }
         return b;
     }
-    /*
-    public static void getTracks(CompositeNode node, DataBank trkg, DataBank clusters){
-        
-        tracks.dataNode().setRows(0);
-        int index = trkg.getSchema().getEntryOrder("Cluster1_ID");
-        int[] ids = new int[6];
-        Map<Integer,Integer> map = clusters.getMap("id");
-        int nodeRows = 0;
-        for(int row = 0; row < trkg.getRows(); row++){       
-            double chi2 = trkg.getFloat("chi2", row);
-            double vz = trkg.getFloat("Vtx0_z", row);
-            if(chi2<500&&vz>-15&&vz<5&&chi2<800){
-                for(int i = 0; i < ids.length; i++) ids[i] = trkg.getInt(index+i, row);
-                tracks.dataNode().setRows(nodeRows+1);                
-                tracks.dataNode().putShort(2, nodeRows, (short)trkg.getInt("sector", row));
-                tracks.dataNode().putShort(3, nodeRows, (short) trkg.getInt("q", row));
-                tracks.dataNode().putFloat(4, nodeRows, trkg.getFloat("chi2", row));
-                tracks.dataNode().putFloat(5, nodeRows, trkg.getFloat("p0_x", row));
-                tracks.dataNode().putFloat(6, nodeRows, trkg.getFloat("p0_y", row));
-                tracks.dataNode().putFloat(7, nodeRows, trkg.getFloat("p0_z", row));
-                tracks.dataNode().putFloat(8, nodeRows, trkg.getFloat("Vtx0_x", row));
-                tracks.dataNode().putFloat(9, nodeRows, trkg.getFloat("Vtx0_y", row));
-                tracks.dataNode().putFloat(10, nodeRows, trkg.getFloat("Vtx0_z", row));
-                                
-                for(int i = 0 ; i < ids.length; i++){
-                    tracks.dataNode().putInt(  11+i,   nodeRows,  ids[i]);
-                                        
-                    if(map.containsKey(ids[i])){
-                        tracks.dataNode().putFloat(17+i, nodeRows, clusters.getFloat("wireL1", map.get(ids[i])));
-                        tracks.dataNode().putFloat(23+i, nodeRows, clusters.getFloat("wireL6", map.get(ids[i])));                
-                    } else {
-                        tracks.dataNode().putFloat(17+i, nodeRows, 0.0f);
-                        tracks.dataNode().putFloat(23+i, nodeRows, 0.0f);
-                    }
-                }
-                nodeRows++;
-            }
-        }*/
 }
