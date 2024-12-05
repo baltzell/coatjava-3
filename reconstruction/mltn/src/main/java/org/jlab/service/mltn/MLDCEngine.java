@@ -6,7 +6,9 @@ package org.jlab.service.mltn;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.jlab.clas.reco.ReconstructionEngine;
 import org.jlab.io.base.DataBank;
@@ -34,14 +36,43 @@ public class MLDCEngine extends ReconstructionEngine {
     @Override
     public boolean processDataEvent(DataEvent de) {
         
+        List<ByteBuffer> trackBuffers = new ArrayList<>();
+        
         if(de.hasBank("TimeBasedTrkg::TBTracks")&&de.hasBank("TimeBasedTrkg::TBClusters")){
             //System.out.println("writing trakcing bank");
             DataBank   tbt = de.getBank("TimeBasedTrkg::TBTracks");
             DataBank   tbc = de.getBank("TimeBasedTrkg::TBClusters");
-            ByteBuffer bb = getTracks(tbt,tbc);
-            DataBank output = de.createBank("MLDC::tracks", bb.array().length);
+            ByteBuffer bb = getTracks(tbt,tbc,10);
+            trackBuffers.add(bb);
+            /*DataBank output = de.createBank("MLDC::tracks", bb.array().length);
             for(int j = 0; j < bb.array().length; j++)
                 output.setByte("bytes", j,bb.array()[j]);
+            de.appendBank(output);*/
+        }
+        
+        if(de.hasBank("TimeBasedTrkg::AITracks")&&de.hasBank("TimeBasedTrkg::AIClusters")){
+            DataBank   tbt = de.getBank("TimeBasedTrkg::AITracks");
+            DataBank   tbc = de.getBank("TimeBasedTrkg::AIClusters");
+            ByteBuffer bb = getTracks(tbt,tbc,20);
+            trackBuffers.add(bb);
+        }
+        
+        if(trackBuffers.size()>0){
+            int[] lengths = new int[trackBuffers.size()];
+            int[] offsets = new int[trackBuffers.size()];
+            int size = 0;
+            for(int k = 0; k < offsets.length; k++){                
+                lengths[k] = trackBuffers.get(k).array().length;
+                offsets[k] = size;
+                size += trackBuffers.get(k).array().length;
+            }
+            byte[] buffer = new byte[size];
+            for(int k = 0; k < trackBuffers.size(); k++){
+                System.arraycopy(trackBuffers.get(k).array(), 0, buffer, offsets[k], lengths[k]);
+            }
+            DataBank output = de.createBank("MLDC::tracks", buffer.length);
+            for(int j = 0; j < buffer.length; j++)
+                output.setByte("bytes", j,buffer[j]);
             de.appendBank(output);
         }
         
@@ -73,7 +104,8 @@ public class MLDCEngine extends ReconstructionEngine {
         return map;
     }
     
-    public static ByteBuffer getTracks(DataBank trkg, DataBank clusters){
+    
+    public static ByteBuffer getTracks(DataBank trkg, DataBank clusters, int status){
         Map<Integer,Integer> map = getMap(clusters);
         int size = trkg.rows();
         int bsize = 110;
@@ -85,7 +117,11 @@ public class MLDCEngine extends ReconstructionEngine {
         int[] cid = new int[6];
         for(int j = 0; j < size; j++){
             int offset = j*bsize;
-            b.putShort(offset+0, (short) 0);
+            int charge = (int) ht.getByte("q",j);
+            int     ps = status + (charge<0?2:1);
+            //System.out.printf(" row = %4d , status = %5d, charge = %3d, pstat = %5d\n",
+            //        j,status,charge,ps);
+            b.putShort(offset+0, (short) ps);
             b.putFloat(offset+2, 0.0f);
             b.putShort(offset+6, (short) ht.getByte("sector",j));
             b.putShort(offset+8, (short) ht.getByte("q",j));
