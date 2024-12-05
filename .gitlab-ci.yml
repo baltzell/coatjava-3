@@ -7,7 +7,6 @@ workflow:
     - if: '$CI_COMMIT_BRANCH == "development"'
     - if: '$CI_COMMIT_TAG'
 
-
 default:
   image: ubuntu:noble
   retry: 2

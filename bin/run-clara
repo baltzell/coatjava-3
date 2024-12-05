@@ -34,7 +34,7 @@ do
         p) prefix=$OPTARG ;;
         c) CLARA_HOME=$OPTARG ;;
         t) threads=$OPTARG && echo $threads | grep -q -E '^[0-9]+$' || error "-t must be an integer, threads" ;;
-        n) nevents="-e $OPTARG" && echo $nevents | grep -q -E '^-e [0-9]+$' || error "-n must be an integer, events" ;;
+        n) nevents="-e $OPTARG" && echo "$nevents" | grep -q -E '^-e [0-9]+$' || error "-n must be an integer, events" ;;
         m) merge=1 ;;
         h) echo -e "\n$usage" && echo -e $info && exit 0 ;;
     esac
