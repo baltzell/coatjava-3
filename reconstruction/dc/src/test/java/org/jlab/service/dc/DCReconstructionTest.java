@@ -41,7 +41,7 @@ public class DCReconstructionTest {
     SchemaFactory schemaFactory = new SchemaFactory();
     schemaFactory.initFromDirectory(dir);
 
-    DataEvent testEvent = TestEvent.getDCSector1ElectronEvent(schemaFactory);
+    DataEvent testEvent = TestEvent.getDCSector1ElectronEvent(0);
 
     MagFieldsEngine enf = new MagFieldsEngine();
     enf.init();

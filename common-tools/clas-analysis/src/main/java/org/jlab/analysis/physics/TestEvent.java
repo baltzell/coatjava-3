@@ -1,9 +1,12 @@
 package org.jlab.analysis.physics;
 
+import java.io.File;
 import org.jlab.io.hipo.HipoDataEvent;
 import org.jlab.jnp.hipo4.data.Bank;
 import org.jlab.jnp.hipo4.data.Event;
 import org.jlab.jnp.hipo4.data.SchemaFactory;
+import org.jlab.jnp.hipo4.io.HipoReader;
+import org.jlab.jnp.hipo4.io.HipoWriterSorted;
 
 /**
  *
@@ -11,11 +14,36 @@ import org.jlab.jnp.hipo4.data.SchemaFactory;
  */
 public class TestEvent {
 
+    public static void main(String args[]) {
+        writeDCSector1ElectronEvent();
+        getDCSector1ElectronEvent(0).show();
+    }
+
+    public static void writeDCSector1ElectronEvent() {
+        HipoWriterSorted writer = new HipoWriterSorted();
+        writer.setCompressionType(2);
+        writer.getSchemaFactory().initFromDirectory("/Users/baltzell/sw/coatjava/dev/etc/bankdefs/hipo4");
+        writer.open("/Users/baltzell/org.jlab.analysis.physics.TestEvent.hipo");
+        HipoDataEvent e = getDCSector1ElectronEvent(writer.getSchemaFactory());
+        writer.addEvent(e.getHipoEvent());
+        writer.close();
+    }
+    
+    public static HipoDataEvent getDCSector1ElectronEvent(int event) {
+        HipoReader reader = new HipoReader();
+        Event e = new Event();
+        try {
+            File file = new File(TestEvent.class.getResource("/test/TestEvent.hipo").toURI());
+            reader.open(file.getAbsolutePath());//"/Users/baltzell/org.jlab.analysis.physics.TestEvent.hipo");
+            reader.getEvent(e, event);
+            return new HipoDataEvent(e,reader.getSchemaFactory());
+        } catch (java.net.URISyntaxException x) {
+            return null;
+        }
+    }
 
 	public static HipoDataEvent getDCSector1ElectronEvent(SchemaFactory schemaFactory) {
-                Event testEvent = new Event();
-		
-		
+        Event testEvent = new Event();
 
 		// this event is based on a gemc event with
  		// one generated electron with p=2.5, th=25, ph=0
