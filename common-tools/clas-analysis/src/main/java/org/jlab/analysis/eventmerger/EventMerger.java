@@ -1,7 +1,6 @@
 package org.jlab.analysis.eventmerger;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -50,7 +49,7 @@ public class EventMerger {
     
     public EventMerger() {
         detectors = this.getDetectors(DetectorType.DC.getName(), DetectorType.FTOF.getName());
-        orders = this.getOrders(OrderType.NOMINAL.name(),OrderType.BGADDED_NOMINAL.name(),OrderType.BGREMOVED.name());
+        orders = this.getOrders(OrderType.NOMINAL.name(),OrderType.BGADDED_NOMINAL.name(),OrderType.BGREMOVED.name(),OrderType.BGREMOVED_BG.name());
         printConfiguration();
     }
 
@@ -196,7 +195,7 @@ public class EventMerger {
         
         if(!event.hasBank("RUN::config"))
             return;
-        if(!bgs.isEmpty() && bgs.size()%2==0)
+        if(bgs.isEmpty() || bgs.size()%2!=0)
             return;
         for(DataEvent bg : bgs)
             if(!bg.hasBank("RUN::config"))
@@ -205,8 +204,8 @@ public class EventMerger {
         if(event.hasBank("DC::doca")) event.removeBank("DC::doca");
         
         int nbg = bgs.size()/2;
-        List<DataEvent> bg1 = bgs.subList(1, nbg-1);
-        List<DataEvent> bg2 = bgs.subList(nbg, 2*nbg-1);        
+        List<DataEvent> bg1 = bgs.subList(0, nbg);
+        List<DataEvent> bg2 = bgs.subList(nbg, 2*nbg);        
         ADCTDCMerger merger = new ADCTDCMerger(constants, event, bg1, bg2);
         merger.setSuppressDoubleHits(suppressDoubleHits);
         merger.setPreserveHitOrder(preserveHitOrder);

@@ -1,7 +1,6 @@
 package org.jlab.analysis.eventmerger;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import org.jlab.detector.banks.RawBank;
