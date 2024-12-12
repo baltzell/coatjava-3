@@ -283,11 +283,14 @@ public class Measurements {
 //    }
         
     private List<Surface> getClusterSurfaces(DetectorType type, List<Cluster> clusters, Ray ray) {
-        
-        List<Surface> surfaces = this.getClusterSurfaces(type, clusters, ray);        
-        for(Surface surf : surfaces) {
-            surf.hemisphere = this.getHemisphere(ray, surf); 
-        }
+       List<Surface> surfaces = new ArrayList<>();         
+       for(Cluster cluster : clusters) {
+            Surface surf = this.getClusterSurface(type, cluster);
+            if(surf!=null) {
+                surf.hemisphere = this.getHemisphere(ray, surf); 
+                surfaces.add(surf);
+            }
+       }
         return surfaces;
     }
     
@@ -341,7 +344,8 @@ public class Measurements {
                     if(surface == null) continue;
                     surface.hemisphere=hemisphere;
                     surface.passive=true;
-                    if(debug) System.out.println("Generating surface for missing index " + i + " detector " + type.getName() + " layer " + layer + " sector " + surface.getSector());
+                    if(debug) System.out.println("Generating surface for missing index " + i +" id "+id+ " detector " + type.getName() + " layer " + layer + " sector " + surface.getSector()+" hemisphere "+
+                            hemisphere);
                     this.add(i, surface);
                 }
             }
@@ -434,15 +438,22 @@ public class Measurements {
     }
     
     private int getHemisphere(Ray ray, Surface surface){
-        if(surface.cylinder==null)
-            return 0;
-        List<Point3D> trajs = new ArrayList<>();
-        Line3D line = ray.toLine();
-        if(surface.cylinder.intersection(line, trajs)>= 1) {
-            return (int) Math.signum(trajs.get(0).y());
+        int h =0;
+        if(surface.cylinder!=null) {
+            List<Point3D> trajs = new ArrayList<>();
+            Line3D line = ray.toLine();
+            if(surface.cylinder.intersection(line, trajs)>= 1) {
+                h= (int) Math.signum(trajs.get(0).y());
+            }
         }
-        else 
-            return 0;
+        if(surface.plane!=null) {
+            Point3D traj = new Point3D();
+            Line3D line = ray.toLine();
+            if(surface.plane.intersection(line, traj)>= 1) {
+                h= (int) Math.signum(traj.y());
+            }
+        }
+        return h;
     }
     private int getHemisphere(Cluster cluster, Seed seed, Surface surface) {
         if(surface.cylinder==null)
