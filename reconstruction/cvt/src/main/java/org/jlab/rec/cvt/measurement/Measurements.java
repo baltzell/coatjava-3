@@ -1,7 +1,9 @@
 package org.jlab.rec.cvt.measurement;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.jlab.clas.tracking.kalmanfilter.Material;
 import org.jlab.clas.tracking.kalmanfilter.Surface;
 import org.jlab.clas.tracking.objects.Strip;
@@ -79,7 +81,7 @@ public class Measurements {
     private void add(int index, Surface surface) {
         if(!(0<=index && index<cvtSurfaces.length))
             throw new IllegalArgumentException("Error: invalid index ="+index);
-        if(debug) System.out.println("adding at index " + index + " surface for layer/sector " + surface.getLayer() + "/" + surface.getSector() + " with type " + surface.type.name());
+        if(debug) System.out.println("adding at index " + index + " surface for layer/sector " + surface.getLayer() + "/" + surface.getSector() + " with type " + surface.type.name()+" hemisphere "+surface.hemisphere);
         surface.setIndex(index);
         cvtSurfaces[index] = surface;
     }
@@ -230,17 +232,31 @@ public class Measurements {
         this.addClusters(cosmic);
         this.addMissing(cosmic);
         List<Surface> surfaces = new ArrayList<>();
+        Map<Double, Surface> yMp = new LinkedHashMap<>();
         for(Surface surf : cvtSurfaces) {
             if(surf!=null) {
-                if(debug) System.out.println(surf.toString());
                 if(surf.passive && surf.getIndex()!=0 && !this.isCrossed(cosmic.getRay(), surf)) {
-                    if(debug) System.out.println("Removing surface " + surf.passive + " " + this.isCrossed(cosmic.getRay(), surf));
+                    if(debug) System.out.println("Removing surface "+surf.toString()+" " + surf.passive + " " + this.isCrossed(cosmic.getRay(), surf));
                     continue;
                 }
-                surfaces.add(surf);
+                double sy = this.getY(cosmic.getRay(), surf);
+                yMp.put(sy, surf);
             }
         }
-        return surfaces;            
+        Map<Double, Surface> sortedMap = new LinkedHashMap<>();
+        yMp.entrySet()
+            .stream()
+            .sorted((entry1, entry2) -> entry2.getKey().compareTo(entry1.getKey())) // Sort in descending order
+            .forEach(entry -> sortedMap.put(entry.getKey(), entry.getValue())); // Insert sorted entries into new map
+        
+        if(debug) sortedMap.forEach((key, value) -> System.out.println(key + ": " + value));
+        int i=0;
+        for(Surface surf : sortedMap.values()) {
+            surf.setIndex(i++);
+            surfaces.add(surf);
+        }
+        if(debug) sortedMap.forEach((key, value) -> System.out.println(key + ":: " + value));
+        return surfaces;
     }
     
     public List<Surface> getActiveMeasurements(StraightTrack cosmic) {
@@ -429,12 +445,33 @@ public class Measurements {
         
     }
     
+    private double getY(Ray ray, Surface surface) {
+        double y =0;
+        if(surface.cylinder!=null) {
+            List<Point3D> trajs = new ArrayList<>();
+            Line3D line = ray.toLine();
+            if(surface.cylinder.intersection(line, trajs)>= 1) {
+                y= trajs.get(0).y();
+            }
+        }
+        
+        if(surface.plane!=null) {
+            Point3D traj = new Point3D();
+            Line3D line = ray.toLine();
+            if(surface.plane.intersection(line, traj)>= 1) {
+                y= traj.y();
+            }
+        }
+        return y;
+    }
+    
     private boolean isCrossed(Ray ray, Surface surface){
         if(surface.cylinder==null)
             return true;
         List<Point3D> trajs = new ArrayList<>();
         Line3D line = ray.toLine();
-        return surface.cylinder.intersection(line, trajs) > 1;
+        return (surface.cylinder.intersection(line, trajs) >= 1 &&
+                surface.hemisphere==(int) Math.signum(trajs.get(0).y()));
     }
     
     private int getHemisphere(Ray ray, Surface surface){
@@ -446,12 +483,9 @@ public class Measurements {
                 h= (int) Math.signum(trajs.get(0).y());
             }
         }
+        
         if(surface.plane!=null) {
-            Point3D traj = new Point3D();
-            Line3D line = ray.toLine();
-            if(surface.plane.intersection(line, traj)>= 1) {
-                h= (int) Math.signum(traj.y());
-            }
+            h=(int) surface.hemisphere;
         }
         return h;
     }
