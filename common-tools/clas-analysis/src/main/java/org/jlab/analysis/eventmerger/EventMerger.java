@@ -266,7 +266,7 @@ public class EventMerger {
         parser.addRequired("-i"    ,"signal event file");
         parser.setRequiresInputList(true);
         parser.addOption("-n"    ,"-1", "maximum number of events to process");
-        parser.addOption("-d"    ,"DC,FTOF", "list of detectors, for example \"DC,FTOF,HTCC\" or \"ALL\" for all available detectors. Use DC1, DC2 or DC3 to select the DC region");
+        parser.addOption("-d"    ,"ALL", "list of detectors, for example \"DC,FTOF,HTCC\" or \"ALL\" for all available detectors. Use DC1, DC2 or DC3 to select the DC region");
         parser.addOption("-r"    ,"1", "reuse background events: 0-false, 1-true");
         parser.addOption("-s"    ,"1", "suppress double TDC hits on the same component, 0-no suppression, 1-suppression");
         parser.addOption("-l"    ,"1", "preserve initial hit order (for compatibility with truth matching, 0-false, 1-true");
