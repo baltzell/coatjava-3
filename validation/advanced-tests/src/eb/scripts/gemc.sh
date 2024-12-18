@@ -7,13 +7,14 @@ gemc=5.10
 nevnts=100
 particles=()
 
-while getopts "g:n:c:p:h" o
+while getopts "g:n:c:p:th" o
 do
     case ${o} in
         g) gemc=${OPTARG} ;;
         n) nevents=${OPTARG} ;;
         c) gcard=${OPTARG} ;;
         p) particles+=(${OPTARG}) ;;
+        t) threads=yes ;;
         h) usage 0 ;;
         *) usage 1 ;;
     esac
@@ -24,7 +25,12 @@ then
     top=$(cd $(dirname ${BASH_SOURCE[0]}) && pwd)
     for x in `awk '{print$1}' $top/list.txt`
     do
-        $top/gemc.sh -p $x
+        if [ -z ${threads+x} ]
+        then
+            $top/gemc.sh -p $x
+        else
+            $top/gemc.sh -p $x &
+        fi
     done
 else 
     ! [ -e "$particles.txt" ] && echo Missing input file:  $particles.txt && exit 2
@@ -34,7 +40,7 @@ else
         test -d clas12-config || git clone https://github.com/jeffersonlab/clas12-config
         gcard=clas12-config/gemc/$gemc/clas12-default.gcard 
     fi
-    echo gemc \
+    gemc \
     $gcard \
     -INPUT_GEN_FILE="LUND, $particles.txt" \
     -OUTPUT="hipo, $particles.hipo" \
