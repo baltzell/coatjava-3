@@ -1,6 +1,6 @@
 #!/bin/sh
 
-usage() { echo "Usage: $0 [-g GEMC] [-n NEV] [-p PARTS] [-c GCARD]" 1>&2; exit $1; }
+usage() { echo "Usage: $0 [-g GEMC] [-n NEV] [-p PARTS] [-c GCARD] [-t]" 1>&2; exit $1; }
 
 run=11
 gemc=5.10
@@ -23,7 +23,7 @@ done
 if [ ${#particles[@]} -eq 0 ]
 then
     top=$(cd $(dirname ${BASH_SOURCE[0]}) && pwd)
-    for x in `awk '{print$1}' $top/list.txt`
+    for x in $(awk '{print$1}' $top/list.txt)
     do
         if [ -z ${threads+x} ]
         then
