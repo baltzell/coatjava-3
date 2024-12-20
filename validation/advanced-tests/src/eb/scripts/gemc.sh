@@ -4,7 +4,7 @@ usage() { echo "Usage: $0 [-g GEMC] [-n NEV] [-p PARTS] [-c GCARD] [-t]" 1>&2; e
 
 run=11
 gemc=5.10
-nevnts=100
+nevents=100
 particles=()
 
 while getopts "g:n:c:p:tdh" o
@@ -46,14 +46,14 @@ do
     then
         set -x
         $dryrun gemc \
-        $gcard $arg1 $arg2\
+        $gcard $arg1 $arg2 \
         -INPUT_GEN_FILE="LUND, $p.txt" \
         -OUTPUT="hipo, $p.hipo"
         set +x
     else
         set -x
         $dryrun gemc \
-        $gcard $arg1 $arg2\
+        $gcard $arg1 $arg2 \
         -INPUT_GEN_FILE="LUND, $p.txt" \
         -OUTPUT="hipo, $p.hipo" &
         set +x
