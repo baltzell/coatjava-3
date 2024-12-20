@@ -1,20 +1,20 @@
 #!/bin/sh
 
-usage() { echo "Usage: $0 [-g GEMC] [-n NEV] [-p PARTS] [-c GCARD] [-t]" 1>&2; exit $1; }
+usage() { echo "Usage: $0 [-g GEMC] [-n NEV] [-p PARTS] [-c GCARD] [-m]" 1>&2; exit $1; }
 
 run=11
 gemc=5.10
 nevents=100
 particles=()
 
-while getopts "g:n:c:p:tdh" o
+while getopts "g:n:c:p:mdh" o
 do
     case ${o} in
         g) gemc=${OPTARG} ;;
         n) nevents=${OPTARG} ;;
         c) gcard=${OPTARG} ;;
         p) particles+=(${OPTARG}) ;;
-        t) threads=yes ;;
+        m) multithread=yes ;;
         d) dryrun=echo ;;
         h) usage 0 ;;
         *) usage 1 ;;
@@ -36,29 +36,36 @@ then
     gcard=clas12-config/gemc/$gemc/clas12-default.gcard 
 fi
 
+function run_gemc () {
+    local OPTIND
+    while getopts "r:g:n:c:i:o:d" o
+    do
+        case ${o} in
+            r) _run=${OPTARG} ;;
+            g) _gemc=${OPTARG} ;;
+            n) _nevents=${OPTARG} ;;
+            c) _gcard=${OPTARG} ;;
+            i) _input=${OPTARG} ;;
+            o) _output=${OPTARG} ;;
+        esac
+    done
+    ! [ -e "$_input" ] && echo Missing input file:  $_input && exit 2
+    [ -e "$_output" ] && echo Output file already exists:  $_output && exit 3
+    [ -z ${dryrun+x} ] && set -x
+    $dryrun gemc \
+        $_gcard -RUNNO=$_run -USE_GUI=0 -N=$_nevents \
+        -SAVE_ALL_MOTHERS=1 -SKIPREJECTEDHITS=1 -INTEGRATEDRAW="*" -NGENP=50 \
+        -INPUT_GEN_FILE="LUND, $_input" \
+        -OUTPUT="hipo, $_output" &
+    pid=$!
+    [ -z ${dryrun+x} ] && set +x
+    [ -z ${multithread+x} ] && wait $pid
+}
+
 for p in "${particles[@]}"
 do
-    ! [ -e "$p.txt" ] && echo Missing input file:  $p.txt && exit 2
-    [ -e "$p.hipo" ] && echo Output file already exists:  $p.hipo && exit 3
-    arg1="-RUNNO=$run -USE_GUI=0 -N=$nevents"
-    arg2='-SAVE_ALL_MOTHERS=1 -SKIPREJECTEDHITS=1 -INTEGRATEDRAW="*" -NGENP=50'
-    if [ -z ${threads+x} ]
-    then
-        set -x
-        $dryrun gemc \
-        $gcard $arg1 $arg2 \
-        -INPUT_GEN_FILE="LUND, $p.txt" \
-        -OUTPUT="hipo, $p.hipo"
-        set +x
-    else
-        set -x
-        $dryrun gemc \
-        $gcard $arg1 $arg2 \
-        -INPUT_GEN_FILE="LUND, $p.txt" \
-        -OUTPUT="hipo, $p.hipo" &
-        set +x
-    fi
+    [ -z ${multithread+} ] && args= || args=-m 
+    run_gemc -r $run -g $gemc -n $nevents -c $gcard -i $p.txt -o $p.hipo $args
 done
-
-wait
+[ -z ${multithread+x} ] || wait
 
