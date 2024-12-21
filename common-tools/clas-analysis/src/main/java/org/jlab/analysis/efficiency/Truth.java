@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.TreeMap;
-import java.util.stream.LongStream;
 import org.jlab.jnp.hipo4.data.Bank;
 import org.jlab.jnp.hipo4.data.Event;
 import org.jlab.jnp.hipo4.data.Schema;
@@ -22,7 +21,7 @@ import org.jlab.utils.options.OptionParser;
  * @author baltzell
  */
 public class Truth {
-    
+   
     static final int UDF = 0;
     static final List<Integer> NEGATIVES = Arrays.asList(11, -211, -321, -2212);
     static final List<Integer> POSITIVES = Arrays.asList(-11, 211, 321, 2212, 45);
@@ -32,7 +31,8 @@ public class Truth {
     Schema mcGenMatch;
     Schema mcParticle;
     Schema recParticle;
-    long[][] tallies;
+    long[][] recTallies;
+    long[] mcTallies;
 
     public static void main(String[] args) {
         OptionParser o = new OptionParser("trutheff");
@@ -64,7 +64,8 @@ public class Truth {
         PIDS.addAll(POSITIVES);
         PIDS.addAll(NEUTRALS);
         PIDS.add(UDF);
-        tallies = new long[PIDS.size()][PIDS.size()];
+        mcTallies = new long[PIDS.size()];
+        recTallies = new long[PIDS.size()][PIDS.size()];
         mcGenMatch = schema.getSchema("MC::GenMatch");
         mcParticle = schema.getSchema("MC::Particle");
         recParticle = schema.getSchema("REC::Particle");
@@ -77,8 +78,8 @@ public class Truth {
      * @return probability
      */
     public float get(int truth, int rec) {
-        long sum = LongStream.of(tallies[PIDS.indexOf(truth)]).sum();
-        return sum>0 ? tallies[PIDS.indexOf(truth)][PIDS.indexOf(rec)]/sum : 0;
+        long sum = mcTallies[PIDS.indexOf(truth)];
+        return sum>0 ? ((float)recTallies[PIDS.indexOf(truth)][PIDS.indexOf(rec)])/sum : 0;
     }
 
     /**
@@ -88,8 +89,9 @@ public class Truth {
      */
     public void add(int truth, int rec) {
         if (PIDS.contains(truth)) {
-            if (!PIDS.contains(rec)) add(truth, UDF);
-            else tallies[PIDS.indexOf(truth)][PIDS.indexOf(rec)]++;
+            mcTallies[PIDS.indexOf(truth)]++;
+            if (!PIDS.contains(rec)) recTallies[PIDS.indexOf(truth)][UDF]++;
+            else recTallies[PIDS.indexOf(truth)][PIDS.indexOf(rec)]++;
         }
     }
 
@@ -178,5 +180,4 @@ public class Truth {
         ret.add("effs", effs);
         return ret;
     }
-
 }
