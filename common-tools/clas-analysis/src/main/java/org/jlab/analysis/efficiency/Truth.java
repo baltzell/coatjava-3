@@ -38,7 +38,6 @@ public class Truth {
         OptionParser o = new OptionParser("trutheff");
         o.setRequiresInputList(true);
         o.parse(args);
-        System.out.println(o.getInputList());
         Truth t = new Truth(o.getInputList().get(0));
         t.add(o.getInputList());
         System.out.println(t.toTable());
@@ -88,11 +87,12 @@ public class Truth {
      * @param rec reconstructed PID
      */
     public void add(int truth, int rec) {
-        if (PIDS.contains(truth)) {
-            mcTallies[PIDS.indexOf(truth)]++;
-            if (!PIDS.contains(rec)) recTallies[PIDS.indexOf(truth)][UDF]++;
-            else recTallies[PIDS.indexOf(truth)][PIDS.indexOf(rec)]++;
-        }
+	final int t = PIDS.indexOf(truth);
+        if (t < 0) return;
+	final int r = PIDS.indexOf(rec);
+        mcTallies[t]++;
+        if (r < 0) recTallies[t][UDF]++;
+        else recTallies[t][r]++;
     }
 
     /**
