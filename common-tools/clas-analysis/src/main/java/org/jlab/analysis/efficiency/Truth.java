@@ -166,16 +166,16 @@ public class Truth {
      * @return 
      */
     public JsonObject toJson() {
-        JsonObject ret = new JsonObject();
+        JsonObject effs = new JsonObject();
         JsonArray pids = new JsonArray();
-        JsonArray effs = new JsonArray();
         for (int i=0; i<PIDS.size(); ++i) {
             pids.add(PIDS.get(i));
             JsonArray a = new JsonArray();
             for (int j=0; j<PIDS.size(); ++j)
                 a.add(get(PIDS.get(i),PIDS.get(j)));
-            effs.add(a);
+            effs.add(Integer.toString(PIDS.get(i)),a);
         }
+        JsonObject ret = new JsonObject();
         ret.add("pids", pids);
         ret.add("effs", effs);
         return ret;
