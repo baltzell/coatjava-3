@@ -26,8 +26,8 @@ public class Truth {
     static final List<Integer> NEGATIVES = Arrays.asList(11, -211, -321, -2212);
     static final List<Integer> POSITIVES = Arrays.asList(-11, 211, 321, 2212, 45);
     static final List<Integer> NEUTRALS = Arrays.asList(22, 2112);
-    static List<Integer> PIDS;
 
+    List<Integer> validPids;
     Schema mcGenMatch;
     Schema mcParticle;
     Schema recParticle;
@@ -59,12 +59,12 @@ public class Truth {
     }
 
     private void init(SchemaFactory schema) {
-        PIDS = new ArrayList(NEGATIVES);
-        PIDS.addAll(POSITIVES);
-        PIDS.addAll(NEUTRALS);
-        PIDS.add(UDF);
-        mcTallies = new long[PIDS.size()];
-        recTallies = new long[PIDS.size()][PIDS.size()];
+        validPids = new ArrayList(NEGATIVES);
+        validPids.addAll(POSITIVES);
+        validPids.addAll(NEUTRALS);
+        validPids.add(UDF);
+        mcTallies = new long[validPids.size()];
+        recTallies = new long[validPids.size()][validPids.size()];
         mcGenMatch = schema.getSchema("MC::GenMatch");
         mcParticle = schema.getSchema("MC::Particle");
         recParticle = schema.getSchema("REC::Particle");
@@ -77,8 +77,8 @@ public class Truth {
      * @return probability
      */
     public float get(int truth, int rec) {
-        long sum = mcTallies[PIDS.indexOf(truth)];
-        return sum>0 ? ((float)recTallies[PIDS.indexOf(truth)][PIDS.indexOf(rec)])/sum : 0;
+        long sum = mcTallies[validPids.indexOf(truth)];
+        return sum>0 ? ((float)recTallies[validPids.indexOf(truth)][validPids.indexOf(rec)])/sum : 0;
     }
 
     /**
@@ -87,9 +87,9 @@ public class Truth {
      * @param rec reconstructed PID
      */
     public void add(int truth, int rec) {
-	final int t = PIDS.indexOf(truth);
+	final int t = validPids.indexOf(truth);
         if (t < 0) return;
-	final int r = PIDS.indexOf(rec);
+	final int r = validPids.indexOf(rec);
         mcTallies[t]++;
         if (r < 0) recTallies[t][UDF]++;
         else recTallies[t][r]++;
@@ -147,15 +147,15 @@ public class Truth {
     public String toTable() {
         StringBuilder s = new StringBuilder();
         s.append("      ");
-        for (int i=0; i<PIDS.size(); ++i) {
-            s.append(String.format("%7d",PIDS.get(i)));
-            if (PIDS.size()==i+1) s.append("\n");
+        for (int i=0; i<validPids.size(); ++i) {
+            s.append(String.format("%7d",validPids.get(i)));
+            if (validPids.size()==i+1) s.append("\n");
         }
-        for (int i=0; i<PIDS.size(); ++i) {
-            s.append(String.format("%6d",PIDS.get(i)));
-            for (int j=0; j<PIDS.size(); ++j) {
-                s.append(String.format("%7.4f",get(PIDS.get(i),PIDS.get(j))));
-                if (PIDS.size()==j+1) s.append("\n");
+        for (int i=0; i<validPids.size(); ++i) {
+            s.append(String.format("%6d",validPids.get(i)));
+            for (int j=0; j<validPids.size(); ++j) {
+                s.append(String.format("%7.4f",get(validPids.get(i),validPids.get(j))));
+                if (validPids.size()==j+1) s.append("\n");
             }
         }
         return s.toString();
@@ -168,12 +168,12 @@ public class Truth {
     public JsonObject toJson() {
         JsonObject effs = new JsonObject();
         JsonArray pids = new JsonArray();
-        for (int i=0; i<PIDS.size(); ++i) {
-            pids.add(PIDS.get(i));
+        for (int i=0; i<validPids.size(); ++i) {
+            pids.add(validPids.get(i));
             JsonArray a = new JsonArray();
-            for (int j=0; j<PIDS.size(); ++j)
-                a.add(get(PIDS.get(i),PIDS.get(j)));
-            effs.add(Integer.toString(PIDS.get(i)),a);
+            for (int j=0; j<validPids.size(); ++j)
+                a.add(get(validPids.get(i),validPids.get(j)));
+            effs.add(Integer.toString(validPids.get(i)),a);
         }
         JsonObject ret = new JsonObject();
         ret.add("pids", pids);
