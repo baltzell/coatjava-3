@@ -86,10 +86,10 @@ public class Truth {
      * @param truth truth PID
      * @param rec reconstructed PID
      */
-    public void add(int truth, int rec) {
-	final int t = validPids.indexOf(truth);
+    public synchronized void add(int truth, int rec) {
+        final int t = validPids.indexOf(truth);
         if (t < 0) return;
-	final int r = validPids.indexOf(rec);
+        final int r = validPids.indexOf(rec);
         mcTallies[t]++;
         if (r < 0) recTallies[t][UDF]++;
         else recTallies[t][r]++;
