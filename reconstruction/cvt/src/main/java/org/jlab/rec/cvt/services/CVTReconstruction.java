@@ -138,10 +138,14 @@ public class CVTReconstruction {
         double[] xyBeam = new double[2];
         xyBeam[0] = beamPos.getDoubleValue("x_offset", 0, 0, 0)*10;
         xyBeam[1] = beamPos.getDoubleValue("y_offset", 0, 0, 0)*10;
+        if(Constants.getInstance().seedingDebugMode) 
+            System.out.println("BEAM SPOT INFO.  (xB, yB) = ("+xyBeam[0]+", "+xyBeam[1]+") mm");
         if(event.hasBank("RASTER::position")){
             DataBank raster_bank = event.getBank("RASTER::position");
             xyBeam[0] += raster_bank.getFloat("x", 0)*10;
             xyBeam[1] += raster_bank.getFloat("y", 0)*10;
+            if(Constants.getInstance().seedingDebugMode) 
+                System.out.println("BEAM SPOT W. RASTER  (xB, yB) = ("+xyBeam[0]+", "+xyBeam[1]+") mm");
         }
         return xyBeam;
     }
