@@ -29,3 +29,12 @@ alert_testing:
   trigger:
     project: hallb/alert/c12
     strategy: depend
+
+shared_for_alert_tests:
+  needs: ["coatjava_build"]
+  variables:
+    REF_NAME: "$CI_COMMIT_REF_NAME"
+  trigger:
+    project: hallb/alert/atof/shared_for_alert
+    strategy: depend
+
