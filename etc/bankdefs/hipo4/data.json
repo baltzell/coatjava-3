@@ -1,5 +1,24 @@
 [
   {
+    "name" : "AHDC::wf",
+    "group": 22400,
+    "item" : 10,
+    "info": "Waveform bank for the AHDC",
+    "entries":[
+      { "name":"sector"    , "type":"B", "info":"sector"},
+      { "name":"layer"     , "type":"B", "info":"layer (1-6)"},
+      { "name":"component" , "type":"S", "info":"strips"},
+      { "name":"order"     , "type":"B", "info":"order: 0 - ADCL , 1 - ADCR"},
+      { "name":"timestamp" , "type":"L", "info":"timestamp"},
+      { "name":"s1"        , "type":"S", "info":"sample #1"},
+      { "name":"s2"        , "type":"S", "info":"sample #2"},
+      { "name":"s3"        , "type":"S", "info":"sample #3"},
+      { "name":"s4"        , "type":"S", "info":"sample #4"},
+      { "name":"s5"        , "type":"S", "info":"sample #5"},
+      { "name":"s6"        , "type":"S", "info":"sample #6"}
+    ]
+  },
+  {
     "name" : "AHDC::adc",
     "group": 22400,
     "item" : 11,
