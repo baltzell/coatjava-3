@@ -68,7 +68,7 @@ jobs:
   # tests
   #############################################################################
 
-  test_coatjava:
+  pid:
     needs: [ build ]
     strategy:
       fail-fast: true
