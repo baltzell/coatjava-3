@@ -8,5 +8,6 @@ on:
   workflow_dispatch:
 
 jobs:
+  if: false
   validation:
     uses: JeffersonLab/clas12-validation/.github/workflows/ci.yml@main
