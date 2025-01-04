@@ -1,7 +1,7 @@
 package org.jlab.rec.cvt.measurement;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.jlab.clas.tracking.kalmanfilter.Material;
@@ -64,18 +64,18 @@ public class Measurements {
     private void initCosmicSurfaces() {
         cvtSurfaces = new Surface[NSURFACES*2+3];
         this.add(MLayer.COSMICPLANE.getIndex(1),   this.getCosmicPlane());
-        this.add(MLayer.SCHAMBER.getIndex(1),      Geometry.getInstance().getScatteringChamber());
-        this.add(MLayer.SHIELD.getIndex(1),        Geometry.getInstance().getTargetShield());
-        this.add(MLayer.INNERSVTCAGE.getIndex(1),  Geometry.getInstance().getSVT().getFaradayCageSurfaces(0));
-        this.add(MLayer.OUTERSVTCAGE.getIndex(1),  Geometry.getInstance().getSVT().getFaradayCageSurfaces(1));       
-        this.add(MLayer.BMTINNERTUBE.getIndex(1),  Geometry.getInstance().getBMT().getInnerTube()); 
-        this.add(MLayer.BMTOUTERTUBE.getIndex(1),  Geometry.getInstance().getBMT().getOuterTube()); 
-        this.add(MLayer.SCHAMBER.getIndex(-1),     Geometry.getInstance().getScatteringChamber());
+        this.add(MLayer.SCHAMBER.getIndex(1),      Geometry.getInstance().getScatteringChamber(),1);
+        this.add(MLayer.SHIELD.getIndex(1),        Geometry.getInstance().getTargetShield(),1);
+        this.add(MLayer.INNERSVTCAGE.getIndex(1),  Geometry.getInstance().getSVT().getFaradayCageSurfaces(0),1);
+        this.add(MLayer.OUTERSVTCAGE.getIndex(1),  Geometry.getInstance().getSVT().getFaradayCageSurfaces(1),1);       
+        this.add(MLayer.BMTINNERTUBE.getIndex(1),  Geometry.getInstance().getBMT().getInnerTube(),1); 
+        this.add(MLayer.BMTOUTERTUBE.getIndex(1),  Geometry.getInstance().getBMT().getOuterTube(),1); 
+        this.add(MLayer.SCHAMBER.getIndex(-1),     Geometry.getInstance().getScatteringChamber(),-1);
         this.add(MLayer.SHIELD.getIndex(-1),       Geometry.getInstance().getTargetShield(), -1);
         this.add(MLayer.INNERSVTCAGE.getIndex(-1), Geometry.getInstance().getSVT().getFaradayCageSurfaces(0), -1);
         this.add(MLayer.OUTERSVTCAGE.getIndex(-1), Geometry.getInstance().getSVT().getFaradayCageSurfaces(1), -1);       
-        this.add(MLayer.BMTINNERTUBE.getIndex(-1), Geometry.getInstance().getBMT().getInnerTube());        
-        this.add(MLayer.BMTOUTERTUBE.getIndex(-1), Geometry.getInstance().getBMT().getOuterTube()); 
+        this.add(MLayer.BMTINNERTUBE.getIndex(-1), Geometry.getInstance().getBMT().getInnerTube(),-1);        
+        this.add(MLayer.BMTOUTERTUBE.getIndex(-1), Geometry.getInstance().getBMT().getOuterTube(),-1); 
     }
     
     private void add(int index, Surface surface) {
@@ -183,6 +183,7 @@ public class Measurements {
         cosmic.addMaterial(Geometry.VACUUM);
         cosmic.setError(1);
         cosmic.hemisphere = 1;
+        cosmic.rayYinterc=0;
         cosmic.passive = true;
         return cosmic;
     }
@@ -194,7 +195,7 @@ public class Measurements {
         List<Surface> surfaces = new ArrayList<>();
         for(Surface surf : cvtSurfaces) {
             if(surf!=null) {
-                if(debug) System.out.println(surf.toString());
+                if(debug) System.out.println("USING SURFACE "+surf.toString());
                 surfaces.add(surf);
             }
         }
@@ -207,7 +208,7 @@ public class Measurements {
         for(Surface surf : surfaces) {
             if(surf.passive && surf.getIndex()!=0) continue;
             active.add(surf);
-            if(debug) System.out.println(surf.toString());
+            if(debug) System.out.println("ACTIVE SURFACE "+surf.toString());
         }
         return active;
     }
@@ -231,31 +232,29 @@ public class Measurements {
         this.reset();
         this.addClusters(cosmic);
         this.addMissing(cosmic);
-        List<Surface> surfaces = new ArrayList<>();
-        Map<Double, Surface> yMp = new LinkedHashMap<>();
+        List<Surface> surfaces ;
+        Map<Integer, Surface> sMap = new HashMap<>();
         for(Surface surf : cvtSurfaces) {
             if(surf!=null) {
-                if(surf.passive && surf.getIndex()!=0 && !this.isCrossed(cosmic.getRay(), surf)) {
-                    if(debug) System.out.println("Removing surface "+surf.toString()+" " + surf.passive + " " + this.isCrossed(cosmic.getRay(), surf));
-                    continue;
+                
+                if(surf.passive && surf.getIndex()!=0) {
+                    surf.hemisphere = this.getHemisphere((int)surf.hemisphere, cosmic.getRay(), surf); 
+                    
+                    if(!this.isCrossed(cosmic.getRay(), surf)) {
+                        if(debug) System.out.println("Removing surface "+surf.toString()+" " + surf.passive + " " + this.isCrossed(cosmic.getRay(), surf));
+                        continue;
+                    }
                 }
-                double sy = this.getY(cosmic.getRay(), surf);
-                yMp.put(sy, surf);
+                
+                sMap.put(surf.getIndex(), surf);
+                //surfaces.add(surf);
             }
         }
-        Map<Double, Surface> sortedMap = new LinkedHashMap<>();
-        yMp.entrySet()
-            .stream()
-            .sorted((entry1, entry2) -> entry2.getKey().compareTo(entry1.getKey())) // Sort in descending order
-            .forEach(entry -> sortedMap.put(entry.getKey(), entry.getValue())); // Insert sorted entries into new map
-        
-        if(debug) sortedMap.forEach((key, value) -> System.out.println(key + ": " + value));
-        int i=0;
-        for(Surface surf : sortedMap.values()) {
-            surf.setIndex(i++);
-            surfaces.add(surf);
-        }
-        if(debug) sortedMap.forEach((key, value) -> System.out.println(key + ":: " + value));
+        surfaces = new ArrayList<>(sMap.values());
+         if(debug) 
+            for(Surface surf : surfaces) {
+                System.out.println("USED "+surf.toString());
+            }
         return surfaces;
     }
     
@@ -265,7 +264,6 @@ public class Measurements {
         for(Surface surf : surfaces) {
             if(surf.passive && surf.getIndex()!=0) continue;
             active.add(surf);
-            if(debug) System.out.println(surf.toString());
         }
         return active;
     }
@@ -303,7 +301,7 @@ public class Measurements {
        for(Cluster cluster : clusters) {
             Surface surf = this.getClusterSurface(type, cluster);
             if(surf!=null) {
-                surf.hemisphere = this.getHemisphere(ray, surf); 
+                surf.hemisphere = this.getHemisphere(cluster, ray, surf); 
                 surfaces.add(surf);
             }
        }
@@ -358,10 +356,10 @@ public class Measurements {
                     DetectorType type = MLayer.getDetectorType(id);
                     Surface surface = this.getDetectorSurface(ray, type, layer, hemisphere);
                     if(surface == null) continue;
-                    surface.hemisphere=hemisphere;
+                    surface.hemisphere = this.getHemisphere(hemisphere, ray.getRay(), surface); //resets hemisphere for shallow angle tracks
                     surface.passive=true;
                     if(debug) System.out.println("Generating surface for missing index " + i +" id "+id+ " detector " + type.getName() + " layer " + layer + " sector " + surface.getSector()+" hemisphere "+
-                            hemisphere);
+                            surface.hemisphere+" y "+surface.rayYinterc);
                     this.add(i, surface);
                 }
             }
@@ -445,50 +443,149 @@ public class Measurements {
         
     }
     
-    private double getY(Ray ray, Surface surface) {
-        double y =0;
-        if(surface.cylinder!=null) {
-            List<Point3D> trajs = new ArrayList<>();
-            Line3D line = ray.toLine();
-            if(surface.cylinder.intersection(line, trajs)>= 1) {
-                y= trajs.get(0).y();
-            }
+    
+    
+    private double getY(Cluster cluster, Ray ray, Surface surface) {
+        if (ray == null || surface == null) {
+            return Double.POSITIVE_INFINITY;
         }
-        
-        if(surface.plane!=null) {
-            Point3D traj = new Point3D();
-            Line3D line = ray.toLine();
-            if(surface.plane.intersection(line, traj)>= 1) {
-                y= traj.y();
-            }
+
+        Line3D line = ray.toLine(); // Shared line for both cylinder and plane
+        if (surface.cylinder != null) {
+            return handleCylinderIntersection(cluster, surface.cylinder, line);
         }
-        return y;
+
+        if (surface.plane != null) {
+            return handlePlaneIntersection(line, surface.plane);
+        }
+
+        return Double.POSITIVE_INFINITY; // Default if no surface type matched
+    }
+
+    private double handleCylinderIntersection(Cluster cluster, Cylindrical3D cylinder, Line3D line) {
+        if (cluster.getType() != BMTType.C) {
+            return cluster.center().y(); // For non-C type clusters, return the center y
+        }
+
+        List<Point3D> intersections = new ArrayList<>();
+        int intersectionCount = cylinder.intersection(line, intersections);
+
+        switch (intersectionCount) {
+            case 0:
+                return Double.POSITIVE_INFINITY;
+            case 1:
+                return intersections.get(0).y();
+            case 2:
+                // Choose the intersection closest to the cluster center on the z-axis
+                Point3D closest = getClosestIntersectionToClusterZ(cluster, intersections);
+                return closest.y();
+            default:
+                return Double.POSITIVE_INFINITY;
+        }
+    }
+
+    private double getY(int h, Ray ray, Surface surface) {
+        if (ray == null || surface == null) {
+            return Double.POSITIVE_INFINITY;
+        }
+
+        Line3D line = ray.toLine(); // Shared line for both cylinder and plane
+        if (surface.cylinder != null) {
+            return handleCylinderIntersection(h, surface.cylinder, line);
+        }
+
+        if (surface.plane != null) {
+            return handlePlaneIntersection(line, surface.plane);
+        }
+
+        return Double.POSITIVE_INFINITY; // Default if no surface type matched
     }
     
-    private boolean isCrossed(Ray ray, Surface surface){
-        if(surface.cylinder==null)
-            return true;
-        List<Point3D> trajs = new ArrayList<>();
+    private double handleCylinderIntersection(int h, Cylindrical3D cylinder, Line3D line) {
+        
+        List<Point3D> intersections = new ArrayList<>();
+        int intersectionCount = cylinder.intersection(line, intersections);
+
+        switch (intersectionCount) {
+            case 0:
+                return Double.POSITIVE_INFINITY;
+            case 1:
+                return intersections.get(0).y();
+            case 2:
+                // Choose 
+                double yFirst = intersections.get(0).y();
+                double ySecond =intersections.get(1).y();
+
+            return (int) Math.signum(yFirst)==h ? yFirst : ySecond;
+            
+            default:
+                return Double.POSITIVE_INFINITY;
+        }
+    }
+    
+    private double handlePlaneIntersection(Line3D line, Plane3D plane) {
+        Point3D intersection = new Point3D();
+        if (plane.intersection(line, intersection) != 0) {
+            return intersection.y();
+        }
+        return Double.POSITIVE_INFINITY;
+    }
+
+    private Point3D getClosestIntersectionToClusterZ(Cluster cluster, List<Point3D> intersections) {
+        Point3D first = intersections.get(0);
+        Point3D second = intersections.get(1);
+
+        double distanceToFirst = Math.abs(cluster.center().z() - first.z());
+        double distanceToSecond = Math.abs(cluster.center().z() - second.z());
+
+        return distanceToFirst < distanceToSecond ? first : second;
+    }
+
+    private int getHemisphere(Cluster cluster, Ray ray, Surface surface){
+        double Y = this.getY(cluster, ray, surface);
+        if(Y == Double.POSITIVE_INFINITY) return 0;
+        surface.rayYinterc=Y;
+        return (int) Math.signum(Y);
+        
+    }
+    
+    private int getHemisphere(int h, Ray ray, Surface surface){
+        double Y = this.getY(h, ray, surface);
+        if(Y == Double.POSITIVE_INFINITY) return 0;
+        surface.rayYinterc=Y;
+        return (int) Math.signum(Y);
+        
+    }
+    
+    private boolean isCrossed(Ray ray, Surface surface) {
+        if (surface.cylinder == null) {
+            return false;
+        }
+
+        List<Point3D> intersections = new ArrayList<>();
         Line3D line = ray.toLine();
-        return (surface.cylinder.intersection(line, trajs) >= 1 &&
-                surface.hemisphere==(int) Math.signum(trajs.get(0).y()));
-    }
-    
-    private int getHemisphere(Ray ray, Surface surface){
-        int h =0;
-        if(surface.cylinder!=null) {
-            List<Point3D> trajs = new ArrayList<>();
-            Line3D line = ray.toLine();
-            if(surface.cylinder.intersection(line, trajs)>= 1) {
-                h= (int) Math.signum(trajs.get(0).y());
-            }
+        int intersectionCount = surface.cylinder.intersection(line, intersections);
+
+        if (intersectionCount == 0) {
+            return false;
         }
-        
-        if(surface.plane!=null) {
-            h=(int) surface.hemisphere;
+
+        // Get the hemisphere sign for comparison
+        int hemisphereSign = (int) Math.signum(surface.hemisphere);
+
+        switch (intersectionCount) {
+            case 1:
+                // Check if the single intersection matches the hemisphere
+                return hemisphereSign == (int) Math.signum(intersections.get(0).y());
+            case 2:
+                // Check if either of the two intersections match the hemisphere
+                return hemisphereSign == (int) Math.signum(intersections.get(0).y()) ||
+                       hemisphereSign == (int) Math.signum(intersections.get(1).y());
+            default:
+                return false; // If more than 2 intersections, return false (shouldn't happen)
         }
-        return h;
     }
+
     private int getHemisphere(Cluster cluster, Seed seed, Surface surface) {
         if(surface.cylinder==null)
             return 0;
