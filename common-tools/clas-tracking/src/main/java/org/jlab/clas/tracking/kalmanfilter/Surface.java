@@ -42,6 +42,7 @@ public class Surface implements Comparable<Surface> {
     public double swimAccuracy;
     public boolean passive = false;
     public double hemisphere = 1;
+    public double rayYinterc = 9999;
     
     public double[] unc = new double[2];
     public double[] doca = new double[2];
@@ -421,11 +422,18 @@ public class Surface implements Comparable<Surface> {
 
     @Override
     public int compareTo(Surface o) {
-       if (this.index > o.index) {
-            return 1;
+       if(this.rayYinterc==9999) {
+            if (this.index > o.index) {
+             return 1;
+            } else {
+             return -1;
+            }
         } else {
-            return -1;
-        }
+            if (this.rayYinterc < o.rayYinterc) {
+                return 1;
+            } else {
+                return -1;
+            }
+       }
     }
-
 }
