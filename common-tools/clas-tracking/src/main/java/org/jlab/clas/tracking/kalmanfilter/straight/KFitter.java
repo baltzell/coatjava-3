@@ -54,22 +54,24 @@ public class KFitter extends AKFitter {
             double newchisq = this.calc_chi2(sv, mv); 
             // if curvature is 0, fit failed
             if(Double.isNaN(newchisq) || sv.smoothed().get(0)==null) {
-                this.setFitFailed = true;
+                this.setFitFailed = true; 
                 break;
             }
             else if(newchisq < this.chi2) {
                 this.chi2 = newchisq;
+                finalStateVec = sv.new StateVec(sv.smoothed().get(0));
                 this.setTrajectory(sv, mv);
-                setFitFailed = false;
+                //System.out.println(finalStateVec.toString());
+                //setFitFailed = false;
             }
             // stop if chi2 got worse
             else {
                 break;
             }
         }
-        if(!this.setFitFailed) {
-            finalStateVec = sv.new StateVec(sv.smoothed().get(0));
-        }
+        //if(!this.setFitFailed) {
+        //    finalStateVec = sv.new StateVec(sv.smoothed().get(0));
+        //}
     }
 
     @Override
