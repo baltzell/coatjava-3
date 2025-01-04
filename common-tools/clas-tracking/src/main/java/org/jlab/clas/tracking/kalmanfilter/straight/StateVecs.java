@@ -58,12 +58,26 @@ public class StateVecs extends AStateVecs {
 //                mv.surface.toGlobal().apply(cylInt);
                 List<Point3D> inters = new ArrayList();
                 int ints = mv.surface.cylinder.intersection(toPln, inters);
-                if(ints<1) return false;
-                
-                vec.x = inters.get(0).x()  ;
-                vec.y = inters.get(0).y()  ;
-                vec.z = inters.get(0).z()  ;
-                vec.path = inters.get(0).distance(ref);
+                if(ints<1) { 
+                    if(!mv.surface.passive) {
+                        return false;
+                    } else {
+                        mv.skip=true;
+                        return true;
+                    }
+                } else {
+                    int index =0;
+                    if(ints>1) {
+                        double dh0 = Math.abs(inters.get(0).y()-mv.surface.rayYinterc);
+                        double dh1 = Math.abs(inters.get(1).y()-mv.surface.rayYinterc);
+                        if(dh1<dh0)
+                            index=1;
+                    }
+                    vec.x = inters.get(index).x()  ;
+                    vec.y = inters.get(index).y()  ;
+                    vec.z = inters.get(index).z()  ;
+                    vec.path = inters.get(index).distance(ref);
+                }
                 
             } 
             return true;
@@ -178,7 +192,6 @@ public class StateVecs extends AStateVecs {
         this.trackTrajB.clear();
         this.trackTrajS.clear();
         this.trackTrajT.put(0, new StateVec(initSV));
-        
     }
 
     @Override
