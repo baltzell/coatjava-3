@@ -9,7 +9,6 @@ import org.jlab.clas.tracking.kalmanfilter.AStateVecs;
 import org.jlab.clas.tracking.kalmanfilter.Surface;
 import org.jlab.clas.tracking.kalmanfilter.Units;
 import org.jlab.clas.tracking.trackrep.Helix;
-import org.jlab.clas.tracking.utilities.MatrixOps;
 import org.jlab.geom.prim.Line3D;
 import org.jlab.geom.prim.Point3D;
 import org.jlab.geom.prim.Vector3D;
@@ -72,13 +71,13 @@ public class StateVecs extends AStateVecs {
                 List<Point3D> inters = new ArrayList();
                 int ints = mv.surface.cylinder.intersection(toPln, inters);
                 if(ints<1) return false;
+               
+                    sv.x = inters.get(0).x()  ;
+                    sv.y = inters.get(0).y()  ;
+                    sv.z = inters.get(0).z()  ;
+                    sv.path = inters.get(0).distance(st);
                 
-                sv.x = inters.get(0).x()  ;
-                sv.y = inters.get(0).y()  ;
-                sv.z = inters.get(0).z()  ;
-                sv.path = inters.get(0).distance(st);
-                
-            }
+                }
         } else { 
             if(swim==null) { // applicable only to planes parallel to the z -axis
                 Helix helix = sv.getHelix(xref, yref);
