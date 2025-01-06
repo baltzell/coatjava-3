@@ -22,6 +22,5 @@ jobs:
         ]
       matrix_config: >-
         [
-          "default",
           "rgb_fall2019"
         ]
