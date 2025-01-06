@@ -154,7 +154,7 @@ public class Truth {
         for (int i=0; i<validPids.size(); ++i) {
             s.append(String.format("%6d",validPids.get(i)));
             for (int j=0; j<validPids.size(); ++j) {
-                if (mcTallies[validPids.indexOf(i)] > 0)
+                if (mcTallies[i] > 0)
                     s.append(String.format("%7.4f",get(validPids.get(i),validPids.get(j))));
                 else
                     s.append(String.format("%7s","-"));
@@ -178,7 +178,7 @@ public class Truth {
             for (int j=0; j<validPids.size(); ++j)
                 a.add(get(validPids.get(i),validPids.get(j)));
             effs.add(Integer.toString(validPids.get(i)),a);
-            gens.add(Integer.toString(validPids.get(i)), mcTallies[validPids.indexOf(i)]);
+            gens.add(Integer.toString(validPids.get(i)), mcTallies[i]);
         }
         JsonObject ret = new JsonObject();
         ret.add("pids", pids);
