@@ -43,7 +43,7 @@
         <dependency>
             <groupId>ai.djl</groupId>
             <artifactId>model-zoo</artifactId>
-            <version>0.30.0</version>
+            <version>0.31.1</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
