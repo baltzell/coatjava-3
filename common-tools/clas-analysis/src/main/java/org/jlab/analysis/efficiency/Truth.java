@@ -154,7 +154,10 @@ public class Truth {
         for (int i=0; i<validPids.size(); ++i) {
             s.append(String.format("%6d",validPids.get(i)));
             for (int j=0; j<validPids.size(); ++j) {
-                s.append(String.format("%7.4f",get(validPids.get(i),validPids.get(j))));
+                if (mcTallies[validPids.indexOf(i)] > 0)
+                    s.append(String.format("%7.4f",get(validPids.get(i),validPids.get(j))));
+                else
+                    s.append(String.format("%7s","-"));
                 if (validPids.size()==j+1) s.append("\n");
             }
         }
