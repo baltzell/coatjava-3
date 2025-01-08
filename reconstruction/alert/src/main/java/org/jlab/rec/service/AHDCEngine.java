@@ -38,6 +38,7 @@ import org.jlab.rec.ahdc.KalmanFilter.MaterialMap;
 import org.jlab.rec.ahdc.PreCluster.PreCluster;
 import org.jlab.rec.ahdc.PreCluster.PreClusterFinder;
 import org.jlab.rec.ahdc.Track.Track;
+import org.jlab.utils.CLASResources;
 
 import java.io.File;
 import java.io.IOException;
@@ -80,9 +81,10 @@ public class AHDCEngine extends ReconstructionEngine {
 				return new NDList(samples);
 			}
 		};
-
+		
+		String path = CLASResources.getResourcePath("etc/nnet/ALERT/model_AHDC/"); 
 		Criteria<float[], Float> my_model = Criteria.builder().setTypes(float[].class, Float.class)
-				.optModelPath(Paths.get(System.getenv("CLAS12DIR") + "/../reconstruction/alert/src/main/java/org/jlab/rec/ahdc/AI/model/"))
+				.optModelPath(Paths.get(path))
 				.optEngine("PyTorch")
 				.optTranslator(my_translator)
 				.optProgress(new ProgressBar())
