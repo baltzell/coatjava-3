@@ -1,29 +1,12 @@
 package org.jlab.rec.service;
 
-import ai.djl.MalformedModelException;
-import ai.djl.ndarray.NDArray;
-import ai.djl.ndarray.NDList;
-import ai.djl.ndarray.NDManager;
-import ai.djl.ndarray.types.Shape;
-import ai.djl.repository.zoo.Criteria;
-import ai.djl.repository.zoo.ModelNotFoundException;
-import ai.djl.repository.zoo.ZooModel;
-import ai.djl.training.util.ProgressBar;
-import ai.djl.translate.TranslateException;
-import ai.djl.translate.Translator;
-import ai.djl.translate.TranslatorContext;
 import org.jlab.clas.reco.ReconstructionEngine;
 import org.jlab.clas.tracking.kalmanfilter.Material;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.io.hipo.HipoDataSource;
 import org.jlab.io.hipo.HipoDataSync;
-import org.jlab.jnp.hipo4.data.SchemaFactory;
-import org.jlab.rec.ahdc.AI.AIPrediction;
-import org.jlab.rec.ahdc.AI.PreClustering;
-import org.jlab.rec.ahdc.AI.PreclusterSuperlayer;
-import org.jlab.rec.ahdc.AI.TrackConstruction;
-import org.jlab.rec.ahdc.AI.TrackPrediction;
+import org.jlab.rec.ahdc.AI.*;
 import org.jlab.rec.ahdc.Banks.RecoBankWriter;
 import org.jlab.rec.ahdc.Cluster.Cluster;
 import org.jlab.rec.ahdc.Cluster.ClusterFinder;
@@ -38,11 +21,8 @@ import org.jlab.rec.ahdc.KalmanFilter.MaterialMap;
 import org.jlab.rec.ahdc.PreCluster.PreCluster;
 import org.jlab.rec.ahdc.PreCluster.PreClusterFinder;
 import org.jlab.rec.ahdc.Track.Track;
-import org.jlab.utils.CLASResources;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.*;
 
 public class AHDCEngine extends ReconstructionEngine {
@@ -51,7 +31,7 @@ public class AHDCEngine extends ReconstructionEngine {
 	private boolean                   use_AI_for_trackfinding;
 	private String                    findingMethod;
 	private HashMap<String, Material> materialMap;
-	private ZooModel<float[], Float>  model;
+	private Model model;
 
 	public AHDCEngine() {
 		super("ALERT", "ouillon", "1.0.1");
@@ -67,36 +47,7 @@ public class AHDCEngine extends ReconstructionEngine {
 			materialMap = MaterialMap.generateMaterials();
 		}
 
-		Translator<float[], Float> my_translator = new Translator<float[], Float>() {
-			@Override
-			public Float processOutput(TranslatorContext translatorContext, NDList ndList) throws Exception {
-				return ndList.get(0).getFloat();
-			}
-
-			@Override
-			public NDList processInput(TranslatorContext translatorContext, float[] floats) throws Exception {
-				NDManager manager = NDManager.newBaseManager();
-				NDArray samples = manager.zeros(new Shape(floats.length));
-				samples.set(floats);
-				return new NDList(samples);
-			}
-		};
-		
-		String path = CLASResources.getResourcePath("etc/nnet/ALERT/model_AHDC/"); 
-		Criteria<float[], Float> my_model = Criteria.builder().setTypes(float[].class, Float.class)
-				.optModelPath(Paths.get(path))
-				.optEngine("PyTorch")
-				.optTranslator(my_translator)
-				.optProgress(new ProgressBar())
-				.build();
-
-
-		try {
-			model = my_model.loadModel();
-		} catch (IOException | ModelNotFoundException | MalformedModelException e) {
-			throw new RuntimeException(e);
-		}
-
+		model = new Model();
 
 		return true;
 	}
@@ -182,8 +133,8 @@ public class AHDCEngine extends ReconstructionEngine {
 
 				try {
 					AIPrediction aiPrediction = new AIPrediction();
-					predictions = aiPrediction.prediction(tracks, model);
-				} catch (ModelNotFoundException | MalformedModelException | IOException | TranslateException e) {
+					predictions = aiPrediction.prediction(tracks, model.getModel());
+				} catch (Exception e) {
 					throw new RuntimeException(e);
 				}
 
