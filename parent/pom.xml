@@ -18,6 +18,19 @@
     </repository>
   </repositories>
 
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>ai.djl</groupId>
+        <artifactId>bom</artifactId>
+        <version>0.30.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <!-- https://mvnrepository.com/artifact/junit/junit -->
     <dependency>
@@ -52,10 +65,38 @@
       <version>0.30.0</version>
       <scope>compile</scope>
     </dependency>
+
     <dependency>
       <groupId>ai.djl.pytorch</groupId>
       <artifactId>pytorch-model-zoo</artifactId>
       <version>0.30.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>ai.djl.pytorch</groupId>
+      <artifactId>pytorch-engine</artifactId>
+      <version>0.30.0</version>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>ai.djl.pytorch</groupId>
+      <artifactId>pytorch-native-cpu</artifactId>
+      <classifier>linux-x86_64</classifier>
+      <scope>runtime</scope>
+      <version>2.4.0</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>ai.djl.pytorch</groupId>
+      <artifactId>pytorch-jni</artifactId>
+      <version>2.4.0-0.30.0</version>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>ai.djl</groupId>
+      <artifactId>api</artifactId>
     </dependency>
 
   </dependencies>
