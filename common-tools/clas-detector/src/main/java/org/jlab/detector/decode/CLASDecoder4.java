@@ -14,7 +14,7 @@ import org.jlab.detector.decode.DetectorDataDgtz.HelicityDecoderData;
 import org.jlab.detector.helicity.HelicityBit;
 import org.jlab.detector.helicity.HelicitySequence;
 import org.jlab.detector.helicity.HelicityState;
-import org.jlab.detector.pulse.Mode3;
+import org.jlab.detector.pulse.ModeAHDC;
 
 import org.jlab.logging.DefaultLogger;
 
@@ -47,8 +47,8 @@ public class CLASDecoder4 {
     private HipoDataEvent               hipoEvent = null;
     private boolean              isRunNumberFixed = false;
     private int                  decoderDebugMode = 0;
-    private SchemaFactory        schemaFactory = new SchemaFactory();
-    private Mode3 mode3 = new Mode3();
+    private SchemaFactory        schemaFactory    = new SchemaFactory();
+    private ModeAHDC ahdcExtractor                = new ModeAHDC();
 
     public CLASDecoder4(boolean development){
         codaDecoder = new CodaEventDecoder();
@@ -183,6 +183,7 @@ public class CLASDecoder4 {
     public List<DetectorDataDgtz>  getEntriesTDC(DetectorType type){
         return getEntriesTDC(type,dataList);
     }
+
     /**
      * returns TDC entries from decoded data for given detector type
      * @param type detector type
@@ -247,7 +248,7 @@ public class CLASDecoder4 {
     }
 
     public void extractPulses(Event event) {
-        mode3.update(6, null, event, schemaFactory, "BMT::wf", "BMT::adc");
+        ahdcExtractor.update(6, null, event, schemaFactory, "AHDC::wf", "AHDC::adc");
     }
 
     public Bank getDataBankWF(String name, DetectorType type) {
@@ -312,6 +313,31 @@ public class CLASDecoder4 {
         return tdcBANK;
     }
 
+    public Bank getDataBankTDCPetiroc(String name, DetectorType type){
+
+        List<DetectorDataDgtz> tdcDGTZ = this.getEntriesTDC(type);
+        if(schemaFactory.hasSchema(name)==false){
+          System.out.println("WARNING: No schema for TDC type : "  + type);
+          return null;
+        }
+        Bank tdcBANK = new Bank(schemaFactory.getSchema(name), tdcDGTZ.size());
+
+        if(tdcBANK==null) return null;
+
+        // Not sure why  the schemea information isn't used here. 
+        for(int i = 0; i < tdcDGTZ.size(); i++){
+            tdcBANK.putByte("sector", i, (byte) tdcDGTZ.get(i).getDescriptor().getSector());
+            tdcBANK.putByte("layer", i, (byte) tdcDGTZ.get(i).getDescriptor().getLayer());
+            tdcBANK.putShort("component", i, (short) tdcDGTZ.get(i).getDescriptor().getComponent());
+            tdcBANK.putByte("order", i, (byte) tdcDGTZ.get(i).getDescriptor().getOrder());
+            tdcBANK.putInt("TDC", i, tdcDGTZ.get(i).getTDCData(0).getTime());
+            tdcBANK.putInt("ToT", i, tdcDGTZ.get(i).getTDCData(0).getToT());
+            //System.err.println("event: " + tdcDGTZ.get(i).toString());
+        }
+        return tdcBANK;
+    }
+
+
     public Bank getDataBankTimeStamp(String name, DetectorType type) {
 
         List<DetectorDataDgtz> tdcDGTZ = this.getEntriesTDC(type);
@@ -322,7 +348,8 @@ public class CLASDecoder4 {
             int hash = ((desc.getCrate()<<8)&0xFF00) | (desc.getSlot()&0x00FF);
             if(tsMap.containsKey(hash)) {
                 if(tsMap.get(hash).getTimeStamp() != tdc.getTimeStamp()) 
-                    System.out.println("WARNING: inconsistent timestamp for DCRB crate/slot " + desc.getCrate() + "/" + desc.getSlot());
+                    System.out.println("WARNING: inconsistent timestamp for DCRB crate/slot " 
+                                       + desc.getCrate() + "/" + desc.getSlot());
             }
             else {
                 tsMap.put(hash, tdc);
@@ -415,19 +442,29 @@ public class CLASDecoder4 {
 
         Event event = new Event();
 
-        String[] wfBankNames = new String[]{"BMT::wf"};
-        DetectorType[] wfBankTypes = new DetectorType[]{DetectorType.BMT};
-        
-        String[]        adcBankNames = new String[]{"FTOF::adc","ECAL::adc","FTCAL::adc","FTHODO::adc","FTTRK::adc",
-                                                    "HTCC::adc","BST::adc","CTOF::adc","CND::adc","LTCC::adc","BMT::adc",
-                                                    "FMT::adc","HEL::adc","RF::adc","BAND::adc","RASTER::adc"};
-        DetectorType[]  adcBankTypes = new DetectorType[]{DetectorType.FTOF,DetectorType.ECAL,DetectorType.FTCAL,DetectorType.FTHODO,DetectorType.FTTRK,
-                                                          DetectorType.HTCC,DetectorType.BST,DetectorType.CTOF,DetectorType.CND,DetectorType.LTCC,DetectorType.BMT,
-                                                          DetectorType.FMT,DetectorType.HEL,DetectorType.RF,DetectorType.BAND, DetectorType.RASTER};
+        String[]         wfBankNames = new String[]{"AHDC::wf"};
+        DetectorType[]   wfBankTypes = new DetectorType[]{DetectorType.AHDC};
+        String[]        adcBankNames = new String[]{"FTOF::adc","ECAL::adc","FTCAL::adc",
+                                                    "FTHODO::adc", "FTTRK::adc",
+                                                    "HTCC::adc","BST::adc","CTOF::adc",
+                                                    "CND::adc","LTCC::adc","BMT::adc",
+                                                    "FMT::adc","HEL::adc","RF::adc",
+                                                    "BAND::adc","RASTER::adc"};
+        DetectorType[]  adcBankTypes = new DetectorType[]{DetectorType.FTOF,DetectorType.ECAL,DetectorType.FTCAL,
+                                                          DetectorType.FTHODO,DetectorType.FTTRK,
+                                                          DetectorType.HTCC,DetectorType.BST,DetectorType.CTOF,
+                                                          DetectorType.CND,DetectorType.LTCC,DetectorType.BMT,
+                                                          DetectorType.FMT,DetectorType.HEL,DetectorType.RF,
+                                                          DetectorType.BAND, DetectorType.RASTER};
 
-        String[]        tdcBankNames = new String[]{"FTOF::tdc","ECAL::tdc","DC::tdc","HTCC::tdc","LTCC::tdc","CTOF::tdc","CND::tdc","RF::tdc","RICH::tdc","BAND::tdc"};
-        DetectorType[]  tdcBankTypes = new DetectorType[]{DetectorType.FTOF,DetectorType.ECAL,
-            DetectorType.DC,DetectorType.HTCC,DetectorType.LTCC,DetectorType.CTOF,DetectorType.CND,DetectorType.RF,DetectorType.RICH,DetectorType.BAND};
+        String[] tdcBankNames = new String[]{"FTOF::tdc","ECAL::tdc","DC::tdc",
+                                             "HTCC::tdc","LTCC::tdc","CTOF::tdc",
+                                             "CND::tdc","RF::tdc","RICH::tdc",
+                                             "BAND::tdc"};
+        DetectorType[] tdcBankTypes = new DetectorType[]{DetectorType.FTOF,DetectorType.ECAL,
+                                                         DetectorType.DC,DetectorType.HTCC,DetectorType.LTCC,
+                                                         DetectorType.CTOF,DetectorType.CND,DetectorType.RF,
+                                                         DetectorType.RICH,DetectorType.BAND};
 
         for(int i = 0; i < adcBankTypes.length; i++){
             Bank adcBank = getDataBankADC(adcBankNames[i],adcBankTypes[i]);
@@ -453,6 +490,18 @@ public class CLASDecoder4 {
                 }
             }
         }
+        try {
+            // Do ATOF 
+            Bank tdcBank = getDataBankTDCPetiroc("ATOF::tdc",DetectorType.ATOF);
+            if(tdcBank!=null){
+                if(tdcBank.getRows()>0){
+                    event.write(tdcBank);
+                }
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+
 
         try {
             Bank tsBank = getDataBankTimeStamp("DC::jitter", DetectorType.DC);
@@ -464,10 +513,10 @@ public class CLASDecoder4 {
         } catch(Exception e) {
             e.printStackTrace();
         }
+
         /**
          * Adding un-decoded banks to the event
          */
-
         try {
             Bank adcBankUD = this.getDataBankUndecodedADC("RAW::adc", DetectorType.UNDEFINED);
             if(adcBankUD!=null){
@@ -703,6 +752,8 @@ public class CLASDecoder4 {
     public static void main(String[] args){
 
         OptionParser parser = new OptionParser("decoder");
+
+        parser.setDescription("CLAS12 Data Decoder");
         parser.addOption("-n", "-1", "maximum number of events to process");
         parser.addOption("-c", "2", "compression type (0-NONE, 1-LZ4 Fast, 2-LZ4 Best, 3-GZIP)");
         parser.addOption("-d", "0","debug mode, set >0 for more verbose output");
@@ -753,8 +804,8 @@ public class CLASDecoder4 {
         writer.setCompressionType(compression);
         writer.getSchemaFactory().initFromDirectory(ClasUtilsFile.getResourceDir("CLAS12DIR", "etc/bankdefs/hipo4"));
 
-        Bank   rawScaler = new Bank(writer.getSchemaFactory().getSchema("RAW::scaler"));
-        Bank  rawRunConf = new Bank(writer.getSchemaFactory().getSchema("RUN::config"));
+        Bank  rawScaler   = new Bank(writer.getSchemaFactory().getSchema("RAW::scaler"));
+        Bank  rawRunConf  = new Bank(writer.getSchemaFactory().getSchema("RUN::config"));
         Bank  helicityAdc = new Bank(writer.getSchemaFactory().getSchema("HEL::adc"));
         Event scalerEvent = new Event();
 

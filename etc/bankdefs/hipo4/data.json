@@ -1,18 +1,51 @@
 [
   {
-	 "name" : "ATOF::adc",
-	 "group": 22500,
-	 "item" : 11,
-	 "info": "ADC bank for the ALERT time-of-flight detector",
-	 "entries":[
-	   { "name":"sector"    , "type":"B", "info":"sector (0-14) clockwise looking downstream, 0 = 12 o'clock"},
-	   { "name":"layer"     , "type":"B", "info":"subsector (0-3) clockwise looking downstream"},
-	   { "name":"component" , "type":"S", "info":"PMT in row (0 = upstream)"},
-	   { "name":"order"     , "type":"B", "info":"order: (0-1), 0 = inner, 1 = outer"},
-	   { "name":"ADC"       , "type":"I", "info":"ADC maximum"},
-	   { "name":"time"      , "type":"F", "info":"time from pulse fit"},
-	   { "name":"ped"       , "type":"S", "info":"pedestal from pulse analysis"}
-	]
+    "name" : "AHDC::wf",
+    "group": 22400,
+    "item" : 10,
+    "info": "Waveform bank for the AHDC",
+    "entries":[
+      { "name":"sector"    , "type":"B", "info":"sector"},
+      { "name":"layer"     , "type":"B", "info":"layer (1-6)"},
+      { "name":"component" , "type":"S", "info":"strips"},
+      { "name":"order"     , "type":"B", "info":"order: 0 - ADCL , 1 - ADCR"},
+      { "name":"timestamp" , "type":"L", "info":"timestamp"},
+      { "name":"s1"        , "type":"S", "info":"sample #1"},
+      { "name":"s2"        , "type":"S", "info":"sample #2"},
+      { "name":"s3"        , "type":"S", "info":"sample #3"},
+      { "name":"s4"        , "type":"S", "info":"sample #4"},
+      { "name":"s5"        , "type":"S", "info":"sample #5"},
+      { "name":"s6"        , "type":"S", "info":"sample #6"}
+    ]
+  },
+  {
+    "name" : "AHDC::adc",
+    "group": 22400,
+    "item" : 11,
+	"info": "ADC bank for the ALERT Wire Chamber",
+	"entries":[
+	  { "name":"sector"    , "type":"B", "info":"sector 1"},
+	  { "name":"layer"     , "type":"B", "info":"layer 1-5"},
+	  { "name":"component" , "type":"S", "info":"wire number"},
+	  { "name":"order"     , "type":"B", "info":"Stereo angle 0 - in, 1 - out"},
+          { "name":"ADC"       , "type":"I", "info":"ADC maximum"}, 
+          { "name":"time"      , "type":"F", "info":"time from pulse fit"},
+          { "name":"ped"       , "type":"S", "info":"pedestal from pulse analysis"}
+    ]
+  },
+  {
+    "name" : "ATOF::tdc",
+    "group": 22500,
+    "item" : 12,
+    "info": "TDC bank for the ALERT TOF",
+    "entries":[
+      { "name":"sector"    , "type":"B", "info":"sector (=1)"},
+      { "name":"layer"     , "type":"B", "info":"layer (=1)"},
+      { "name":"component" , "type":"S", "info":"signal (1-2)"},
+      { "name":"order"     , "type":"B", "info":"order: 2 - TDCL , 3 - TDCR"},
+      { "name":"TDC"       , "type":"I", "info":"TDC value"},
+      { "name":"ToT"       , "type":"I", "info":"Time Over Threshold"}
+    ]
   },
   {
     "name" : "BMT::adc",
@@ -28,27 +61,7 @@
       { "name":"time"      , "type":"F", "info":"time from pulse fit"},
       { "name":"ped"       , "type":"S", "info":"pedestal from pulse analysis"},
       { "name":"integral"  , "type":"I", "info":"ADC integral (sum over the pulse)"},
-      { "name":"timestamp" , "type":"L", "info":"timestamp"},
-      { "name":"id"        , "type":"S", "info":"link to BMT::wf"}
-    ]
-  },
-  {
-    "name" : "BMT::wf",
-    "group": 20100,
-    "item" : 12,
-    "info": "WF bank for the Barrel MicroMegas Tracker",
-    "entries":[
-      { "name":"sector"    , "type":"B", "info":"sector"},
-      { "name":"layer"     , "type":"B", "info":"layer (1-6)"},
-      { "name":"component" , "type":"S", "info":"strips"},
-      { "name":"order"     , "type":"B", "info":"order: 0 - ADCL , 1 - ADCR"},
-      { "name":"timestamp" , "type":"L", "info":"timestamp"},
-      { "name":"s1"        , "type":"S", "info":"sample #1"},
-      { "name":"s2"        , "type":"S", "info":"sample #2"},
-      { "name":"s3"        , "type":"S", "info":"sample #3"},
-      { "name":"s4"        , "type":"S", "info":"sample #4"},
-      { "name":"s5"        , "type":"S", "info":"sample #5"},
-      { "name":"s6"        , "type":"S", "info":"sample #6"}
+      { "name":"timestamp" , "type":"L", "info":"timestamp"}
     ]
   },
   {

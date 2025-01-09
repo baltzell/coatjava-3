@@ -16,10 +16,10 @@ public class Pulse {
     public int id;
 
     public float adcMax;
-    public float timeRiseCFA;
-    public float timeFallCFA;
-    public float timeOverThresholdCFA;
-    public float timeCFD;
+    public float leadingEdgeTime ;
+    public float trailingEdgeTime;
+    public float timeOverThreshold;
+    public float constantFractionTime;
 
     /**
      * Units are the same as the raw units of the samples.
