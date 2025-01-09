@@ -138,7 +138,7 @@ jobs:
   final:
     needs:
       - build
-      - test_coatjava
+      - pid
       - test_run-groovy
     runs-on: ubuntu-latest
     steps:
