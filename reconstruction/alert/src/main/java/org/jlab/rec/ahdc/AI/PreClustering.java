@@ -55,12 +55,19 @@ public class PreClustering {
                     ArrayList<Hit> temp = new ArrayList<>();
                     temp.add(hit);
                     hit.setUse(true);
+                    int expected_wire_plus  = hit.getWireId() + 1;
+                    int expected_wire_minus = hit.getWireId() - 1;
+                    if (hit.getWireId() == 1)
+                        expected_wire_minus = hit.getNbOfWires();
+                    if (hit.getWireId() == hit.getNbOfWires() )
+                        expected_wire_plus = 1;
+
 
                     boolean has_next = true;
                     while (has_next) {
                         has_next = false;
                         for (Hit hit1 : p) {
-                            if (hit1.is_NoUsed() && (hit1.getWireId() == temp.get(temp.size() - 1).getWireId() + 1 || hit1.getWireId() == temp.get(temp.size() - 1).getWireId() - 1)) {
+                            if (hit1.is_NoUsed() && (hit1.getWireId() == expected_wire_minus || hit1.getWireId() == expected_wire_plus)) {
                                 temp.add(hit1);
                                 hit1.setUse(true);
                                 has_next = true;
