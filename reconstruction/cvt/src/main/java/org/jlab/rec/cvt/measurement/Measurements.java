@@ -183,7 +183,7 @@ public class Measurements {
         cosmic.addMaterial(Geometry.VACUUM);
         cosmic.setError(1);
         cosmic.hemisphere = 1;
-        cosmic.rayYinterc=0;
+        int inters=plane.intersection(new Line3D(ep1, ep2), cosmic.rayInterc);
         cosmic.passive = true;
         return cosmic;
     }
@@ -240,8 +240,8 @@ public class Measurements {
                 if(surf.passive && surf.getIndex()!=0) {
                     surf.hemisphere = this.getHemisphere((int)surf.hemisphere, cosmic.getRay(), surf); 
                     
-                    if(!this.isCrossed(cosmic.getRay(), surf)) {
-                        if(debug) System.out.println("Removing surface "+surf.toString()+" " + surf.passive + " " + this.isCrossed(cosmic.getRay(), surf));
+                    if(!this.isCrossed(surf)) {
+                        if(debug) System.out.println("Removing surface "+surf.toString()+" " + surf.passive );
                         continue;
                     }
                 }
@@ -359,7 +359,7 @@ public class Measurements {
                     surface.hemisphere = this.getHemisphere(hemisphere, ray.getRay(), surface); //resets hemisphere for shallow angle tracks
                     surface.passive=true;
                     if(debug) System.out.println("Generating surface for missing index " + i +" id "+id+ " detector " + type.getName() + " layer " + layer + " sector " + surface.getSector()+" hemisphere "+
-                            surface.hemisphere+" y "+surface.rayYinterc);
+                            surface.hemisphere+" y "+surface.rayInterc);
                     this.add(i, surface);
                 }
             }
@@ -445,9 +445,9 @@ public class Measurements {
     
     
     
-    private double getY(Cluster cluster, Ray ray, Surface surface) {
+    private Point3D getRayInters(Cluster cluster, Ray ray, Surface surface) {
         if (ray == null || surface == null) {
-            return Double.POSITIVE_INFINITY;
+            return new Point3D(Double.POSITIVE_INFINITY,Double.POSITIVE_INFINITY,Double.POSITIVE_INFINITY);
         }
 
         Line3D line = ray.toLine(); // Shared line for both cylinder and plane
@@ -459,12 +459,12 @@ public class Measurements {
             return handlePlaneIntersection(line, surface.plane);
         }
 
-        return Double.POSITIVE_INFINITY; // Default if no surface type matched
+        return new Point3D(Double.POSITIVE_INFINITY,Double.POSITIVE_INFINITY,Double.POSITIVE_INFINITY); // Default if no surface type matched
     }
 
-    private double handleCylinderIntersection(Cluster cluster, Cylindrical3D cylinder, Line3D line) {
+    private Point3D handleCylinderIntersection(Cluster cluster, Cylindrical3D cylinder, Line3D line) {
         if (cluster.getType() != BMTType.C) {
-            return cluster.center().y(); // For non-C type clusters, return the center y
+            return cluster.center(); // For non-C type clusters, return the center 
         }
 
         List<Point3D> intersections = new ArrayList<>();
@@ -472,21 +472,21 @@ public class Measurements {
 
         switch (intersectionCount) {
             case 0:
-                return Double.POSITIVE_INFINITY;
+                return new Point3D(Double.POSITIVE_INFINITY,Double.POSITIVE_INFINITY,Double.POSITIVE_INFINITY);
             case 1:
-                return intersections.get(0).y();
+                return intersections.get(0);
             case 2:
                 // Choose the intersection closest to the cluster center on the z-axis
                 Point3D closest = getClosestIntersectionToClusterZ(cluster, intersections);
-                return closest.y();
+                return closest;
             default:
-                return Double.POSITIVE_INFINITY;
+                return new Point3D(Double.POSITIVE_INFINITY,Double.POSITIVE_INFINITY,Double.POSITIVE_INFINITY);
         }
     }
 
-    private double getY(int h, Ray ray, Surface surface) {
+    private Point3D getRayInters(int h, Ray ray, Surface surface) {
         if (ray == null || surface == null) {
-            return Double.POSITIVE_INFINITY;
+            return new Point3D(Double.POSITIVE_INFINITY,Double.POSITIVE_INFINITY,Double.POSITIVE_INFINITY);
         }
 
         Line3D line = ray.toLine(); // Shared line for both cylinder and plane
@@ -498,37 +498,41 @@ public class Measurements {
             return handlePlaneIntersection(line, surface.plane);
         }
 
-        return Double.POSITIVE_INFINITY; // Default if no surface type matched
+        return new Point3D(Double.POSITIVE_INFINITY,Double.POSITIVE_INFINITY,Double.POSITIVE_INFINITY); // Default if no surface type matched
     }
     
-    private double handleCylinderIntersection(int h, Cylindrical3D cylinder, Line3D line) {
+    private Point3D handleCylinderIntersection(int h, Cylindrical3D cylinder, Line3D line) {
         
         List<Point3D> intersections = new ArrayList<>();
         int intersectionCount = cylinder.intersection(line, intersections);
 
         switch (intersectionCount) {
             case 0:
-                return Double.POSITIVE_INFINITY;
+                return new Point3D(Double.POSITIVE_INFINITY,Double.POSITIVE_INFINITY,Double.POSITIVE_INFINITY);
             case 1:
-                return intersections.get(0).y();
+                return intersections.get(0);
             case 2:
                 // Choose 
-                double yFirst = intersections.get(0).y();
-                double ySecond =intersections.get(1).y();
+                Point3D yFirst = intersections.get(0);
+                Point3D ySecond =intersections.get(1);
 
-            return (int) Math.signum(yFirst)==h ? yFirst : ySecond;
+                if(Math.signum(yFirst.y())==h) {
+                    return yFirst ; 
+                } else {
+                    return ySecond;
+                }
             
             default:
-                return Double.POSITIVE_INFINITY;
+                return new Point3D(Double.POSITIVE_INFINITY,Double.POSITIVE_INFINITY,Double.POSITIVE_INFINITY);
         }
     }
     
-    private double handlePlaneIntersection(Line3D line, Plane3D plane) {
+    private Point3D handlePlaneIntersection(Line3D line, Plane3D plane) {
         Point3D intersection = new Point3D();
         if (plane.intersection(line, intersection) != 0) {
-            return intersection.y();
+            return intersection;
         }
-        return Double.POSITIVE_INFINITY;
+        return new Point3D(Double.POSITIVE_INFINITY,Double.POSITIVE_INFINITY,Double.POSITIVE_INFINITY);
     }
 
     private Point3D getClosestIntersectionToClusterZ(Cluster cluster, List<Point3D> intersections) {
@@ -542,50 +546,43 @@ public class Measurements {
     }
 
     private int getHemisphere(Cluster cluster, Ray ray, Surface surface){
-        double Y = this.getY(cluster, ray, surface);
-        if(Y == Double.POSITIVE_INFINITY) return 0;
-        surface.rayYinterc=Y;
-        return (int) Math.signum(Y);
+        Point3D Y = this.getRayInters(cluster, ray, surface);
+        if(Y.y() == Double.POSITIVE_INFINITY) return 0;
+        surface.rayInterc=Y;
+        return (int) Math.signum(Y.y());
         
     }
     
     private int getHemisphere(int h, Ray ray, Surface surface){
-        double Y = this.getY(h, ray, surface);
-        if(Y == Double.POSITIVE_INFINITY) return 0;
-        surface.rayYinterc=Y;
-        return (int) Math.signum(Y);
+        Point3D Y = this.getRayInters(h, ray, surface);
+        if(Y.y() == Double.POSITIVE_INFINITY) return 0;
+        surface.rayInterc=Y;
+        return (int) Math.signum(Y.y());
         
     }
     
-    private boolean isCrossed(Ray ray, Surface surface) {
+    private boolean isCrossed(Surface surface) {
         if (surface.cylinder == null) {
             return false;
         }
-
-        List<Point3D> intersections = new ArrayList<>();
-        Line3D line = ray.toLine();
-        int intersectionCount = surface.cylinder.intersection(line, intersections);
-
-        if (intersectionCount == 0) {
+        //is Crossed is called after getHemisphere which computes the intersection of the ray with the cylinder
+        // so there is no need to recompute it and it can just use the hemisphere to determine if the intersection was valid
+        if(surface.hemisphere==0) {
             return false;
+        } else {
+            return true;
         }
-
-        // Get the hemisphere sign for comparison
-        int hemisphereSign = (int) Math.signum(surface.hemisphere);
-
-        switch (intersectionCount) {
-            case 1:
-                // Check if the single intersection matches the hemisphere
-                return hemisphereSign == (int) Math.signum(intersections.get(0).y());
-            case 2:
-                // Check if either of the two intersections match the hemisphere
-                return hemisphereSign == (int) Math.signum(intersections.get(0).y()) ||
-                       hemisphereSign == (int) Math.signum(intersections.get(1).y());
-            default:
-                return false; // If more than 2 intersections, return false (shouldn't happen)
+        
+    }
+    //functionality to find out if a surface is crossed for surfaces where the hemisphere has not been set yet (not used at present
+    private boolean isCrossed(Cluster cluster, Ray ray, Surface surface) {
+        int h = this.getHemisphere(cluster, ray, surface);
+        if(h==0) {
+            return false;
+        } else {
+            return true;
         }
     }
-
     private int getHemisphere(Cluster cluster, Seed seed, Surface surface) {
         if(surface.cylinder==null)
             return 0;
