@@ -31,4 +31,10 @@ public class StringIndexedTable extends DefaultTableModel {
         return Integer.parseInt(getValueString(key, varname));
     }
 
+    public static void main(String args[]) {
+        ConstantsManager c = new ConstantsManager();
+        c.addStringTable("/runcontrol/beam");
+        StringIndexedTable s = c.getStringConstants(11, "/runcontrol/beam");
+        System.out.println("SIT:  "+s.getValueFloat("polarization", "value"));
+    }
 }
