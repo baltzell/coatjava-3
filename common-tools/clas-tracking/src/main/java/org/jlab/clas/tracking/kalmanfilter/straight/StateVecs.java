@@ -44,18 +44,6 @@ public class StateVecs extends AStateVecs {
                 vec.path = inters.distance(ref);
             }
             if(mv.surface.cylinder!=null) {
-                //mv.surface.toLocal().apply(ref);
-                //mv.surface.toLocal().apply(u);
-//                double r = 0.5*(mv.surface.cylinder.baseArc().radius()+mv.surface.cylinder.highArc().radius());
-//                double delta = Math.sqrt((ref.x()*u.x()+ref.y()*u.y())*(ref.x()*u.x()+ref.y()*u.y())
-//                        -(-r*r+ref.x()*ref.x()+ref.y()*ref.y())*(u.x()*u.x()+u.y()*u.y()));
-//                double l = (-(ref.x()*u.x()+ref.y()*u.y())+delta)/(u.x()*u.x()+u.y()*u.y());
-//                if(Math.signum(ref.y()+l*u.y())!=mv.hemisphere) {
-//                    l = (-(ref.x()*u.x()+ref.y()*u.y())-delta)/(u.x()*u.x()+u.y()*u.y()); 
-//                    }
-//
-//                Point3D cylInt = new Point3D(ref.x()+l*u.x(),ref.y()+l*u.y(),ref.z()+l*u.z());
-//                mv.surface.toGlobal().apply(cylInt);
                 List<Point3D> inters = new ArrayList();
                 int ints = mv.surface.cylinder.intersection(toPln, inters);
                 if(ints<1) { 
@@ -67,11 +55,11 @@ public class StateVecs extends AStateVecs {
                     }
                 } else {
                     int index =0;
-                    if(ints>1) {
-                        double dh0 = Math.abs(inters.get(0).y()-mv.surface.rayYinterc);
-                        double dh1 = Math.abs(inters.get(1).y()-mv.surface.rayYinterc);
+                    if(ints>1) {//pick the intersection that is closest to the global fit ray intersection
+                        double dh0 = Math.abs(inters.get(0).y()-mv.surface.rayInterc.y());
+                        double dh1 = Math.abs(inters.get(1).y()-mv.surface.rayInterc.y());
                         if(dh1<dh0)
-                            index=1;
+                            index=1; //if the second intersection is closest use its index
                     }
                     vec.x = inters.get(index).x()  ;
                     vec.y = inters.get(index).y()  ;

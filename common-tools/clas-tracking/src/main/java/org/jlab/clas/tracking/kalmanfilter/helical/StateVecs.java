@@ -53,23 +53,8 @@ public class StateVecs extends AStateVecs {
                 sv.path = inters.distance(st);
             }
             else if(mv.surface.cylinder!=null) {
-//                mv.surface.toLocal().apply(st);
-//                mv.surface.toLocal().apply(stu);
-//                double r = mv.surface.cylinder.baseArc().radius();
-//                double delta = Math.sqrt((st.x()*stu.x()+st.y()*stu.y())*(st.x()*stu.x()+st.y()*stu.y())-(-r*r+st.x()*st.x()+st.y()*st.y())*(stu.x()*stu.x()+stu.y()*stu.y()));
-//                double l = (-(st.x()*stu.x()+st.y()*stu.y())+delta)/(stu.x()*stu.x()+stu.y()*stu.y());
-//                if(Math.signum(st.y()+l*stu.y())!=mv.hemisphere) {
-//                    l = (-(st.x()*stu.x()+st.y()*stu.y())-delta)/(stu.x()*stu.x()+stu.y()*stu.y()); 
-//                } 
-//                Point3D inters = new Point3D(st.x()+l*stu.x(),st.y()+l*stu.y(),st.z()+l*stu.z());
-//                mv.surface.toGlobal().apply(inters);
-//                // RDV: should switch to use clas-geometry intersection method, not done now to alwys return a value
-//                sv.x = inters.x();
-//                sv.y = inters.y();
-//                sv.z = inters.z();
-//                sv.path = inters.distance(st);
                 List<Point3D> inters = new ArrayList();
-                int ints = mv.surface.cylinder.intersection(toPln, inters);
+                int ints = mv.surface.cylinder.intersectionRay(toPln, inters);
                 if(ints<1) return false;
                
                     sv.x = inters.get(0).x()  ;

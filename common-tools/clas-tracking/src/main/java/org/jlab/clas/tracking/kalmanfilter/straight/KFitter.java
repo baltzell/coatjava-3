@@ -62,7 +62,8 @@ public class KFitter extends AKFitter {
                 finalStateVec = sv.new StateVec(sv.smoothed().get(0));
                 this.setTrajectory(sv, mv);
                 //System.out.println(finalStateVec.toString());
-                //setFitFailed = false;
+                //setFitFailed = false; //allow for new iteration to be worse but save the track from the best iteration.  
+                // There are instances where the next iteration is worse at the 1 per 10000 level.  This would loose the track...
             }
             // stop if chi2 got worse
             else {
