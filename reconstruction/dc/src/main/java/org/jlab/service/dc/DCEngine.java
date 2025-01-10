@@ -5,11 +5,13 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jlab.clas.reco.ReconstructionEngine;
+import org.jlab.detector.banks.RawBank.OrderType;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.rec.dc.Constants;
 import org.jlab.rec.dc.banks.Banks;
-import org.jlab.utils.groups.IndexedTable;
+import org.jlab.clas.tracking.kalmanfilter.zReference.KFitter;
+import org.jlab.clas.tracking.kalmanfilter.zReference.DAFilter;
 
 public class DCEngine extends ReconstructionEngine {
 
@@ -18,17 +20,25 @@ public class DCEngine extends ReconstructionEngine {
     
     // options configured from yaml
     private int        selectedSector = 0;
+    private String     ministaggerStatus = null;
+    private String     feedthroughsStatus = null;
     private boolean    wireDistortion = false;
     private boolean    useStartTime   = true;
     private boolean    useBetaCut     = false;
-    private boolean    useDoublets    = false;
+    private boolean    useDoublets    = true;
+    private boolean    dcrbJitter     = false;
+    private boolean    swapDCRBBits   = false;
     private int        t2d            = 1;
     private int        nSuperLayer    = 5;
     private String     geoVariation   = "default";
     private String     bankType       = "HitBasedTrkg";
+    private String     inBankPrefix   = null;
     private String     outBankPrefix  = null;
     private double[][] shifts         = new double[Constants.NREG][6];
-        
+    protected boolean  useDAF         = true;
+    private String   dafChi2Cut     = null;
+    private String   dafAnnealingFactorsTB = null;
+    
     public static final Logger LOGGER = Logger.getLogger(ReconstructionEngine.class.getName());
 
 
@@ -52,6 +62,14 @@ public class DCEngine extends ReconstructionEngine {
         if(this.getEngineConfigString("dcUseStartTime")!=null)
             useStartTime = Boolean.valueOf(this.getEngineConfigString("dcUseStartTime"));
       
+        // R3 ministagger
+        if(this.getEngineConfigString("dcMinistagger")!=null)       
+            ministaggerStatus = this.getEngineConfigString("dcMinistagger");
+        
+        // Wire feedthroughs
+        if(this.getEngineConfigString("dcFeedthroughs")!=null)       
+            feedthroughsStatus = this.getEngineConfigString("dcFeedthroughs");
+        
         // Wire distortions
         if(this.getEngineConfigString("dcWireDistortion")!=null)       
             wireDistortion = Boolean.parseBoolean(this.getEngineConfigString("dcWireDistortion"));
@@ -72,17 +90,44 @@ public class DCEngine extends ReconstructionEngine {
         if(this.getEngineConfigString("dcDoublets")!=null)       
             useDoublets = Boolean.valueOf(this.getEngineConfigString("dcDoublets"));
         
+        //Apply the jitter correction based on DCRB timestamps
+        if(this.getEngineConfigString("dcrbJitter")!=null)       
+            dcrbJitter = Boolean.valueOf(this.getEngineConfigString("dcrbJitter"));
+                
+        //Swap DCRB timestamp bits
+        if(this.getEngineConfigString("swapDCRBBits")!=null)       
+            swapDCRBBits = Boolean.valueOf(this.getEngineConfigString("swapDCRBBits"));
+        
         //NSUPERLAYERTRACKING
         if(this.getEngineConfigString("dcFOOST")!=null)
             if(!Boolean.valueOf(this.getEngineConfigString("dcFOOST"))) {
                 nSuperLayer =6;
             }    
-                
+                        
+        //Set input bank names
+        if(this.getEngineConfigString("inputBankPrefix")!=null) {
+            inBankPrefix = this.getEngineConfigString("inputBankPrefix");
+        }
+
         //Set output bank names
         if(this.getEngineConfigString("outputBankPrefix")!=null) {
             outBankPrefix = this.getEngineConfigString("outputBankPrefix");
         }
         
+        //Set if use DAF
+        if(this.getEngineConfigString("useDAF")!=null) 
+            useDAF=Boolean.valueOf(this.getEngineConfigString("useDAF"));
+        
+        if(this.getEngineConfigString("dafChi2Cut")!=null) {
+            dafChi2Cut=this.getEngineConfigString("dafChi2Cut");
+            DAFilter.setDafChi2Cut(Double.valueOf(dafChi2Cut));
+        }
+        
+        if(this.getEngineConfigString("dafAnnealingFactorsTB")!=null){ 
+            dafAnnealingFactorsTB=this.getEngineConfigString("dafAnnealingFactorsTB");
+            KFitter.setDafAnnealingFactorsTB(dafAnnealingFactorsTB);
+        }
+               
         // Set geometry shifts for alignment code
         if(this.getEngineConfigString("alignmentShifts")!=null) {
             String[] alignmentShift = this.getEngineConfigString("alignmentShifts").split(",");
@@ -99,7 +144,7 @@ public class DCEngine extends ReconstructionEngine {
                     shifts[region-1][iaxis] = value;
                 }
             }
-        }
+        }        
     }
 
 
@@ -107,6 +152,7 @@ public class DCEngine extends ReconstructionEngine {
 
         // Load tables
         Map<String,Integer> dcTables = new HashMap<>();
+        dcTables.put(Constants.TT,3);
         dcTables.put(Constants.DOCARES,3);
         dcTables.put(Constants.TIME2DIST,3);
         dcTables.put(Constants.PRESSURE, 3);
@@ -133,11 +179,15 @@ public class DCEngine extends ReconstructionEngine {
         this.setOptions();
         Constants.getInstance().initialize(this.getName(),
                                            geoVariation, 
+                                           ministaggerStatus, 
+                                           feedthroughsStatus,
                                            wireDistortion, 
                                            useStartTime, 
                                            useBetaCut, 
                                            t2d,
                                            useDoublets,
+                                           dcrbJitter,
+                                           swapDCRBBits,
                                            nSuperLayer, 
                                            selectedSector,
                                            shifts);
@@ -148,24 +198,23 @@ public class DCEngine extends ReconstructionEngine {
     }
 
     private void initBanks() {
-        if(this.getBankPrefix()!=null) this.getBanks().init(outBankPrefix);
+        if(inBankPrefix==null && outBankPrefix!=null) 
+            this.getBanks().init(outBankPrefix);
+        if(inBankPrefix!=null && outBankPrefix!=null) 
+            this.getBanks().init(inBankPrefix, outBankPrefix);
         LOGGER.log(Level.INFO,"["+this.getName()+"] bank names set for " + this.getBanks().toString());       
     }
 
     public Banks getBanks() {
         return bankNames;
     }
-    
-    public void setBankPrefix(String prefix) {
-        this.outBankPrefix = prefix;
-    }
-
-    public String getBankPrefix() {
-        return this.outBankPrefix;
-    }
-    
+        
     public void setDropBanks() {
         
+    }
+    
+    public OrderType[] getRawBankOrders() {
+        return this.rawBankOrders;
     }
     
     public int getRun(DataEvent event) {
@@ -178,22 +227,4 @@ public class DCEngine extends ReconstructionEngine {
         int run = bank.getInt("run", 0);
         return run;
     }
-
-    public double getTriggerPhase(DataEvent event) {
-        DataBank  bank = event.getBank("RUN::config");
-        int        run = bank.getInt("run", 0);
-        long timeStamp = bank.getLong("timestamp", 0);
-        
-        double triggerPhase = 0;
-        if (run>0 && timeStamp>=0) {
-           IndexedTable tabJ = super.getConstantsManager().getConstants(run, Constants.TIMEJITTER);
-           double period = tabJ.getDoubleValue("period", 0, 0, 0);
-           int    phase  = tabJ.getIntValue("phase", 0, 0, 0);
-           int    cycles = tabJ.getIntValue("cycles", 0, 0, 0);
-
-           if (cycles > 0) triggerPhase = period * ((timeStamp + phase) % cycles);
-        }
-        return triggerPhase;
-    }
-
 }

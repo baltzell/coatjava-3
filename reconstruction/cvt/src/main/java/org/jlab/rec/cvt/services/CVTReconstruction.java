@@ -37,13 +37,16 @@ public class CVTReconstruction {
         this.swimmer = swimmer;
     }
 
-
-    public List<ArrayList<Hit>> readHits(DataEvent event, IndexedTable svtStatus, IndexedTable bmtStatus, IndexedTable bmtTime) {
+    
+    public List<ArrayList<Hit>> readHits(DataEvent event, IndexedTable svtStatus, 
+            IndexedTable bmtStatus, IndexedTable bmtTime, 
+            IndexedTable bmtStripVoltage, IndexedTable bmtStripVoltageThresh) {
         
         HitReader hitRead = new HitReader();
         hitRead.fetch_SVTHits(event, -1, -1, svtStatus);
         if(Constants.getInstance().svtOnly==false)
-          hitRead.fetch_BMTHits(event, swimmer, bmtStatus, bmtTime);
+          hitRead.fetch_BMTHits(event, swimmer, bmtStatus, bmtTime, 
+                  bmtStripVoltage, bmtStripVoltageThresh);
 
         //I) get the hits
         List<Hit> SVThits = hitRead.getSVTHits();
@@ -60,6 +63,20 @@ public class CVTReconstruction {
         else {
             CVThits.add((ArrayList<Hit>) BMThits);
         }
+        int totmctru =0;
+        for(Hit h : SVThits) {
+            if(h.MCstatus==0) {
+                totmctru++;
+            }
+        }
+        if(BMThits!=null && !BMThits.isEmpty()) {
+            for(Hit h : BMThits) {
+                if(h.MCstatus==0) {
+                    totmctru++;
+                }
+            }
+        }
+        setTotalNbTruHits(totmctru);
         return CVThits;
     }
     
@@ -121,10 +138,14 @@ public class CVTReconstruction {
         double[] xyBeam = new double[2];
         xyBeam[0] = beamPos.getDoubleValue("x_offset", 0, 0, 0)*10;
         xyBeam[1] = beamPos.getDoubleValue("y_offset", 0, 0, 0)*10;
+        if(Constants.getInstance().seedingDebugMode) 
+            System.out.println("BEAM SPOT INFO.  (xB, yB) = ("+xyBeam[0]+", "+xyBeam[1]+") mm");
         if(event.hasBank("RASTER::position")){
             DataBank raster_bank = event.getBank("RASTER::position");
             xyBeam[0] += raster_bank.getFloat("x", 0)*10;
             xyBeam[1] += raster_bank.getFloat("y", 0)*10;
+            if(Constants.getInstance().seedingDebugMode) 
+                System.out.println("BEAM SPOT W. RASTER  (xB, yB) = ("+xyBeam[0]+", "+xyBeam[1]+") mm");
         }
         return xyBeam;
     }
@@ -163,6 +184,23 @@ public class CVTReconstruction {
 
     public List<Cross> getBMTcrosses() {
         return CVTcrosses.get(1);
+    }
+
+    // for single track truth matching
+    private int totalNbTruHits =0;
+    
+    /**
+     * @return the totalNbTruHits
+     */
+    public int getTotalNbTruHits() {
+        return totalNbTruHits;
+    }
+
+    /**
+     * @param aTotalNbTruHits the totalNbTruHits to set
+     */
+    public void setTotalNbTruHits(int aTotalNbTruHits) {
+        totalNbTruHits = aTotalNbTruHits;
     }
 
 

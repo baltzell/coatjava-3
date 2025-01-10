@@ -19,6 +19,7 @@ import org.jlab.clas.tracking.kalmanfilter.Units;
 import org.jlab.clas.tracking.objects.Strip;
 import org.jlab.detector.calib.utils.ConstantsManager;
 import org.jlab.geom.prim.Transformation3D;
+import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
 import org.jlab.io.base.DataBank;
@@ -627,10 +628,11 @@ public class BMTGeometry {
             full  = true;
             layer = 1;
         }
-        int region = this.getRegion(layer);   
+        //int region = this.getRegion(layer);   
         
         Vector3D vec = new Vector3D(Math.cos(localAngle),Math.sin(localAngle),0);
         if(Double.isNaN(localAngle)) vec = null;
+        if(vec==null) return 0;
         int sector = 0;
         double width = 0.5; // Math.cos(60deg);
         double delta = -1;
@@ -787,7 +789,7 @@ public class BMTGeometry {
             // CHECKME
             double edge   = this.getPhi(layer, sector) - this.getDPhi(layer, sector); // 30 150 270
             double pitch  = this.getZPitch(region,1);
-            double radius = this.getRadius(layer);
+            double radius = this.getRadiusMidDrift(layer);
             double dphi = angle - edge; 
             if(dphi<0) dphi += 2*Math.PI;
             strip = (int) Math.floor(dphi*radius/pitch) + 1;
@@ -952,6 +954,7 @@ public class BMTGeometry {
         Vector3D axis   = new Vector3D(0,0,1);
         Arc3D base = new Arc3D(origin, center, axis, 2*Math.PI);
         Cylindrical3D tube = new Cylindrical3D(base, 2*INNERTUBEDIM[2]);
+        BMTConstants.TOPOSITION.apply(tube);
         Surface surface = new Surface(tube, new Strip(0,0,0), Constants.DEFAULTSWIMACC);
         surface.addMaterial("CarbonFiber", INNERTUBEDIM[1]-INNERTUBEDIM[0],
                             TUBEMAT[0], TUBEMAT[1], TUBEMAT[2], TUBEMAT[3], Units.MM);
@@ -965,11 +968,58 @@ public class BMTGeometry {
         Vector3D axis   = new Vector3D(0,0,1);
         Arc3D base = new Arc3D(origin, center, axis, 2*Math.PI);
         Cylindrical3D tube = new Cylindrical3D(base, 2*OUTERTUBEDIM[2]);
+        BMTConstants.TOPOSITION.apply(tube);
         Surface surface = new Surface(tube, new Strip(0,0,0), Constants.DEFAULTSWIMACC);
         surface.addMaterial("CarbonFiber", OUTERTUBEDIM[1]-OUTERTUBEDIM[0],
                             TUBEMAT[0], TUBEMAT[1], TUBEMAT[2], TUBEMAT[3], Units.MM);
         surface.passive=true;
         return surface;
+    }
+    
+    public DataGroup draw() {
+                
+        CCDBConstantsLoader.Load(new DatabaseConstantProvider(11, "rgb_spring2019"));
+        ConstantsManager ccdb = new ConstantsManager();
+        ccdb.init(Arrays.asList("/calibration/mvt/bmt_voltage"));
+        ccdb.setVariation("default");
+        IndexedTable hv = ccdb.getConstants(11, "/calibration/mvt/bmt_voltage");
+        
+        BMTGeometry newGeo = new BMTGeometry(hv);
+        
+        DataGroup dgBMT = new DataGroup(1, 1);
+        for(int i=0; i<2; i++) {
+            GraphErrors gUpstream   = new GraphErrors("Upstream"   + i);
+            gUpstream.setMarkerColor(i+1);
+            gUpstream.setMarkerSize(2);
+            gUpstream.setTitleX("x (mm)");
+            gUpstream.setTitleY("y (mm)");
+            GraphErrors gDownstream = new GraphErrors("Downstream" + i);
+            gDownstream.setMarkerColor(i==0 ? 1 : 5);
+            gDownstream.setMarkerSize(2);
+            gDownstream.setTitleX("x (mm)");
+            gDownstream.setTitleY("y (mm)");
+            dgBMT.addDataSet(gUpstream,   0);
+            dgBMT.addDataSet(gDownstream, 0);
+        }
+            
+
+        for(int i=1; i<=BMTConstants.NLAYERS; i++) {
+            if(BMTGeometry.getDetectorType(i)==BMTType.Z) {
+                int region = newGeo.getRegion(i);
+                for(int j=1; j<=BMTConstants.NSECTORS; j++) {
+                    for(int k=0; k<=newGeo.getNStrips(i); k++) {
+                        Line3D strip0 = newGeo.getIdealZstrip(region, j, k);
+                        Line3D strip1 = newGeo.getZstrip(region, j, k);
+                        System.out.println(strip1);
+                        dgBMT.getGraph("Upstream0").addPoint(strip0.origin().x(), strip0.origin().y(), 0, 0);
+                        dgBMT.getGraph("Upstream1").addPoint(strip1.origin().x(), strip1.origin().y(), 0, 0);
+                        dgBMT.getGraph("Downstream0").addPoint(strip0.end().x(), strip0.end().y(), 0, 0);
+                        dgBMT.getGraph("Downstream1").addPoint(strip1.end().x(), strip1.end().y(), 0, 0);
+                    }
+                }
+            }
+        }        
+        return dgBMT;
     }
     
     /**
@@ -983,7 +1033,7 @@ public class BMTGeometry {
         ccdb.init(Arrays.asList("/calibration/mvt/bmt_voltage"));
         ccdb.setVariation("default");
         IndexedTable hv = ccdb.getConstants(11, "/calibration/mvt/bmt_voltage");
-        
+
         BMTGeometry newGeo = new BMTGeometry(hv);
         
         System.out.println("\nLayer number for region and detector type:");
@@ -1145,7 +1195,7 @@ public class BMTGeometry {
         }
         
         JFrame frame = new JFrame("BMT geometry");
-        frame.setSize(1200, 800);
+        frame.setSize(800, 800);
         EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed("BMT");
         canvas.getCanvas("BMT").draw(dgBMT);
         frame.add(canvas);

@@ -404,6 +404,46 @@ public final class Cylindrical3D implements Face3D {
     }
     
     /**
+     * Compute the intersections of a ray within the 3D volume
+     * @param line
+     * @param intersections
+     * @return ray path length within the volume
+     */
+    public double intersectionLength(Line3D line, List<Point3D> intersections) {
+        if(this.baseArc.theta()<2*Math.PI) {
+            throw new UnsupportedOperationException("Not supported yet."); 
+        }
+        else {
+            int count = this.intersectionRay(line, intersections);
+            // add intersections with bases
+            Plane3D base0 = new Plane3D(this.baseArc.center(), this.baseArc.normal());
+            Plane3D base1 = new Plane3D(this.highArc().center(), this.baseArc.normal());
+            
+            Point3D intersect0 = new Point3D();
+            if(base0.intersectionRay(line, intersect0)>0 &&
+               intersect0.distance(base0.point())<this.baseArc.radius()) {
+                count++;
+                intersections.add(intersect0);
+            }
+
+            Point3D intersect1 = new Point3D();
+            if(base1.intersectionRay(line, intersect1)>0 &&
+               intersect1.distance(base1.point())<this.baseArc.radius()) {
+                count++;
+                intersections.add(intersect1);
+            }
+            
+            if(count==2) {
+                return intersections.get(0).distance(intersections.get(1));
+            }
+            else if(count==1) {
+                return line.origin().distance(intersections.get(0));
+            }
+        }
+        return 0;
+    }
+
+    /**
      * Returns true if the given point is on the surface of this cylindrical 
      * segment.
      * @param point the point
@@ -424,9 +464,34 @@ public final class Cylindrical3D implements Face3D {
     private boolean checkTheta(Point3D point) {
         Vector3D pBA = baseArc.center().vectorTo(point);
         double t = baseArc.normal().angle(baseArc.originVector(), pBA);
+        if(t<0) t += 2*Math.PI;
         return (0 <= t && t <= baseArc.theta());
     }
     
+    /**
+     * Distance between the point and the closest cylinder edge 
+     * @param point the point
+     * @return distance if point is on the surface, 0 otherwise
+     */
+    public double distanceToEdge(Point3D point) {
+        Vector3D pBA = baseArc.center().vectorTo(point);
+        double h = pBA.dot(baseArc.normal().asUnit());
+        double t = baseArc.normal().angle(baseArc.originVector(), pBA);
+        if(t<0) t += 2*Math.PI;
+        double hmin = Math.min(Math.abs(h), Math.abs(height-h));
+        double rmin = Math.min(Math.abs(t), Math.abs(baseArc.theta()-t))*baseArc.radius();
+        if(baseArc.theta()>=2*Math.PI)
+            rmin = Double.MAX_VALUE;
+        if(h<0 || h>height)
+            hmin *= -1;
+        if(t<0 || t>baseArc.theta())
+            rmin *= -1;
+        if(rmin>0 || hmin>0)
+            return Math.min(hmin, rmin);
+        else
+            return Math.max(hmin, rmin);
+    }
+
     @Override
     public void translateXYZ(double dx, double dy, double dz) {
         baseArc.translateXYZ(dx, dy, dz);

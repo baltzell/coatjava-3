@@ -2,6 +2,7 @@ package org.jlab.rec.dc.banks;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.jlab.detector.base.DetectorType;
 
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
@@ -87,6 +88,7 @@ public class RecoBankWriter {
         bank.setByte("LR", i-rejCnt, (byte) hitlist.get(i).get_LeftRightAmb());
         bank.setShort("clusterID", i-rejCnt, (short) hitlist.get(i).get_AssociatedClusterID());
         bank.setInt("TDC",i-rejCnt,hitlist.get(i).get_TDC());
+        bank.setByte("jitter",i, (byte) hitlist.get(i).getJitter());
         
     }
 
@@ -121,7 +123,7 @@ public class RecoBankWriter {
             bank.setFloat("B", i-rejCnt, (float) hitlist.get(i).getB());
             bank.setFloat("TProp", i-rejCnt, (float) hitlist.get(i).getTProp());
             bank.setFloat("TFlight", i-rejCnt, (float) hitlist.get(i).getTFlight());
-//            if(i>0 && hitlist.get(i).get_Sector()==hitlist.get(i-1).get_Sector() && 
+//            if(i>0 && hitlist.get(i).getSector()==hitlist.get(i-1).getSector() && 
 //                     hitlist.get(i).get_Superlayer()==hitlist.get(i-1).get_Superlayer() && 
 //                     hitlist.get(i).get_Layer()==hitlist.get(i-1).get_Layer() && 
 //                     Math.abs(hitlist.get(i).get_Wire()-hitlist.get(i-1).get_Wire())==1 &&
@@ -133,7 +135,7 @@ public class RecoBankWriter {
 //            if(hitlist.get(i).get_AssociatedHBTrackID()>-1 && !event.hasBank("MC::Particle")) {
 //                bank.setFloat("TProp", i-rejCnt, (float) hitlist.get(i).getSignalPropagTimeAlongWire());
 //                bank.setFloat("TFlight", i-rejCnt, (float) hitlist.get(i).getSignalTimeOfFlight());
-//                if(i>0 && hitlist.get(i).get_Sector()==hitlist.get(i-1).get_Sector() && 
+//                if(i>0 && hitlist.get(i).getSector()==hitlist.get(i-1).getSector() && 
 //                     hitlist.get(i).get_Superlayer()==hitlist.get(i-1).get_Superlayer() && 
 //                     hitlist.get(i).get_Layer()==hitlist.get(i-1).get_Layer() && 
 //                     Math.abs(hitlist.get(i).get_Wire()-hitlist.get(i-1).get_Wire())==1 &&
@@ -320,16 +322,17 @@ public DataBank fillHBClustersBank(DataEvent event, List<FittedCluster> cluslist
         }
         return bank;
     }
-
+    
     public DataBank fillHBTracksBank(DataEvent event, List<Track> candlist) {
         String name = bankNames.getTracksBank();
         DataBank bank = event.createBank(name, candlist.size()); 
 
         for (int i = 0; i < candlist.size(); i++) {
             bank.setShort("id", i, (short) candlist.get(i).get_Id());
-            bank.setByte("sector", i, (byte) candlist.get(i).get_Sector());
+            bank.setByte("sector", i, (byte) candlist.get(i).getSector());
             bank.setByte("q", i, (byte) candlist.get(i).get_Q());
-            bank.setShort("status", i, (short) (100+candlist.get(i).get_Status()*10+candlist.get(i).get_MissingSuperlayer()));
+            //bank.setShort("status", i, (short) (100+candlist.get(i).get_Status()*10+candlist.get(i).get_MissingSuperlayer()));
+            bank.setShort("status", i, (short) candlist.get(i).getBitStatus());
             if(candlist.get(i).get_PreRegion1CrossPoint()!=null) {
                 bank.setFloat("c1_x", i, (float) candlist.get(i).get_PreRegion1CrossPoint().x());
                 bank.setFloat("c1_y", i, (float) candlist.get(i).get_PreRegion1CrossPoint().y());
@@ -395,6 +398,11 @@ public DataBank fillHBClustersBank(DataEvent event, List<FittedCluster> cluslist
         //bank.show();
         return bank;
     }
+        
+    public DataBank fillHBTrajectoryBank(DataEvent event, List<Track> candlist) {
+        return this.fillTrajectoryBank(event, candlist);
+    }
+    
     /**
      *
      * @param event hipo event
@@ -487,8 +495,10 @@ public DataBank fillHBClustersBank(DataEvent event, List<FittedCluster> cluslist
             bank.setShort("clusterID", i, (short) hitlist.get(i).get_AssociatedClusterID());
             bank.setByte("trkID", i, (byte) hitlist.get(i).get_AssociatedTBTrackID());
             bank.setFloat("timeResidual", i, (float) hitlist.get(i).get_TimeResidual());
+            bank.setFloat("DAFWeight", i, (float) hitlist.get(i).getDAFWeight());
             
             bank.setInt("TDC",i,hitlist.get(i).get_TDC());
+            bank.setByte("jitter",i, (byte) hitlist.get(i).getJitter());
             bank.setFloat("B", i, (float) hitlist.get(i).getB());
             bank.setFloat("TProp", i, (float) hitlist.get(i).getTProp());
             bank.setFloat("TFlight", i, (float) hitlist.get(i).getTFlight());
@@ -693,8 +703,10 @@ public DataBank fillHBClustersBank(DataEvent event, List<FittedCluster> cluslist
         DataBank bank = event.createBank(name, candlist.size());
         for (int i = 0; i < candlist.size(); i++) {
             bank.setShort("id", i, (short) candlist.get(i).get_Id());
-            bank.setShort("status", i, (short) (100+candlist.get(i).get_Status()*10+candlist.get(i).get_MissingSuperlayer()));
-            bank.setByte("sector", i, (byte) candlist.get(i).get_Sector());
+            
+            //bank.setShort("status", i, (short) (100+candlist.get(i).get_Status()*10+candlist.get(i).get_MissingSuperlayer()));
+            bank.setShort("status", i, (short) candlist.get(i).getBitStatus());
+            bank.setByte("sector", i, (byte) candlist.get(i).getSector());
             bank.setByte("q", i, (byte) candlist.get(i).get_Q());
             //bank.setFloat("p", i, (float) candlist.get(i).get_P());
             if(candlist.get(i).get_PreRegion1CrossPoint()!=null) {
@@ -751,7 +763,17 @@ public DataBank fillHBClustersBank(DataEvent event, List<FittedCluster> cluslist
                         i, (short) candlist.get(i).getSingleSuperlayer().get_fittedCluster().get_Id());
             }
             bank.setFloat("chi2", i, (float) candlist.get(i).get_FitChi2());
-            bank.setShort("ndf", i, (short) candlist.get(i).get_FitNDF());
+            // To not interrupt current type of ndf, ndf weighted by DAF is converted from float to interger
+            int ndfDAF = 999;
+            if(candlist.get(i).get_NDFDAF() > 0){
+                ndfDAF = (int) Math.ceil(candlist.get(i).get_NDFDAF());
+            }
+            else if (candlist.get(i).get_NDFDAF() < 0){
+                ndfDAF = (int) Math.floor(candlist.get(i).get_NDFDAF());
+            }
+            bank.setShort("ndf", i, (short) ndfDAF);
+            // ndf0 is for traditional ndf for the track; # of hits can be obtained through it
+            bank.setShort("ndf0", i, (short) candlist.get(i).get_FitNDF());
         }
         return bank;
 
@@ -762,33 +784,36 @@ public DataBank fillHBClustersBank(DataEvent event, List<FittedCluster> cluslist
         for (Track track : tracks) {
             if (track == null)
                 continue;
-            if (track.trajectory == null)
+            if (track.getTrajectory() == null)
                 continue;
-            size+=track.trajectory.size();
+            size+=track.getTrajectory().size();
         }       
         DataBank bank = event.createBank(bankNames.getTrajBank(), size);
         int i1=0;
         for (Track track : tracks) {
             if (track == null)
                 continue;
-            if (track.trajectory == null)
+            if (track.getTrajectory() == null)
                 continue;
 
-            for (int j = 0; j < track.trajectory.size(); j++) {
-                if (track.trajectory.get(j).getDetName().equals("DC") && (track.trajectory.get(j).getLayerId() - 6) % 6 != 0)
+            for (int j = 0; j < track.getTrajectory().size(); j++) {
+                if (track.getTrajectory().get(j).getDetector() == DetectorType.DC.getDetectorId() && (track.getTrajectory().get(j).getLayer() - 6) % 6 != 0)
                     continue;  // save the last layer in a superlayer
 
                 bank.setShort("id",       i1, (short) track.get_Id());
-                bank.setByte("detector",  i1, (byte) track.trajectory.get(j).getDetId());
-                bank.setByte("layer",     i1, (byte) track.trajectory.get(j).getLayerId());
-                bank.setFloat("x",        i1, (float) track.trajectory.get(j).getX());
-                bank.setFloat("y",        i1, (float) track.trajectory.get(j).getY());
-                bank.setFloat("z",        i1, (float) track.trajectory.get(j).getZ());
-                bank.setFloat("tx",       i1, (float) ((float) track.trajectory.get(j).getpX() / track.get_P()));
-                bank.setFloat("ty",       i1, (float) ((float) track.trajectory.get(j).getpY() / track.get_P()));
-                bank.setFloat("tz",       i1, (float) ((float) track.trajectory.get(j).getpZ() / track.get_P()));
-                bank.setFloat("B",        i1, (float) track.trajectory.get(j).getiBdl());
-                bank.setFloat("path",     i1, (float) track.trajectory.get(j).getPathLen());
+                bank.setByte("detector",  i1, (byte) track.getTrajectory().get(j).getDetector());
+                bank.setByte("sector",    i1, (byte) track.getSector());
+                bank.setByte("layer",     i1, (byte) track.getTrajectory().get(j).getLayer());
+                bank.setFloat("x",        i1, (float) track.getTrajectory().get(j).getPoint().x());
+                bank.setFloat("y",        i1, (float) track.getTrajectory().get(j).getPoint().y());
+                bank.setFloat("z",        i1, (float) track.getTrajectory().get(j).getPoint().z());
+                bank.setFloat("tx",       i1, (float) track.getTrajectory().get(j).getDirection().x());
+                bank.setFloat("ty",       i1, (float) track.getTrajectory().get(j).getDirection().y());
+                bank.setFloat("tz",       i1, (float) track.getTrajectory().get(j).getDirection().z());
+                bank.setFloat("B",        i1, (float) track.getTrajectory().get(j).getiBdl());
+                bank.setFloat("path",     i1, (float) track.getTrajectory().get(j).getPath());
+                bank.setFloat("dx",       i1, (float) track.getTrajectory().get(j).getDx());
+                bank.setFloat("edge",     i1, (float) track.getTrajectory().get(j).getEdge());
                 i1++;
             }
         }
@@ -801,7 +826,7 @@ public DataBank fillHBClustersBank(DataEvent event, List<FittedCluster> cluslist
 
         for (Hit hit : hits) {
             FittedHit fhit = new FittedHit(hit.get_Sector(), hit.get_Superlayer(),
-                    hit.get_Layer(), hit.get_Wire(), hit.get_TDC(),
+                    hit.get_Layer(), hit.get_Wire(), hit.get_TDC(), hit.getJitter(),
                     hit.get_Id());
             fhit.set_Id(hit.get_Id());
             fhit.set_DocaErr(hit.get_DocaErr());
@@ -853,9 +878,9 @@ public DataBank fillHBClustersBank(DataEvent event, List<FittedCluster> cluslist
             );
         }
     }
-
+    
     public void fillAllTBBanks(DataEvent event, List<FittedHit> fhits, List<FittedCluster> clusters,
-            List<Segment> segments, List<Cross> crosses,
+            List<Segment> segments, List<Cross> crosses, 
             List<Track> trkcands) {
 
         if (event == null) {
@@ -892,5 +917,5 @@ public DataBank fillHBClustersBank(DataEvent event, List<FittedCluster> cluslist
         if (fhits != null && clusters == null) {
             event.appendBanks(this.fillTBHitsBank(event, fhits));
         }
-    }
+    }    
 }

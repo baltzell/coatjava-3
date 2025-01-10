@@ -1,9 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package org.jlab.detector.decode;
 
 import java.util.ArrayList;
@@ -14,18 +8,17 @@ import org.jlab.detector.helicity.HelicityBit;
 import org.jlab.detector.helicity.HelicityState;
 import org.jlab.utils.data.DataUtils;
 
-/**
+/** 
  *
  * @author gavalian
  */
 public class DetectorDataDgtz implements Comparable<DetectorDataDgtz> {
     
-    private final List<ADCData>       adcStore   = new ArrayList<ADCData>();
-    private final List<TDCData>       tdcStore   = new ArrayList<TDCData>();
-    private final List<VTPData>       vtpStore   = new ArrayList<VTPData>();
-    private final List<SCALERData> scalerStore   = new ArrayList<SCALERData>();
-    //private final List<ADCPulse>  pulseStore = new ArrayList<ADCPulse>();    
-    private Long                 timeStamp = 0L;
+    private final List<ADCData>       adcStore   = new ArrayList<>();
+    private final List<TDCData>       tdcStore   = new ArrayList<>();
+    private final List<VTPData>       vtpStore   = new ArrayList<>();
+    private final List<SCALERData> scalerStore   = new ArrayList<>();
+    private Long timeStamp = 0L;
     
     private final DetectorDescriptor  descriptor = new DetectorDescriptor();
     
@@ -169,10 +162,9 @@ public class DetectorDataDgtz implements Comparable<DetectorDataDgtz> {
         return filtered;        
     }
     
-    /**
-     * a class to hold ADC values
+    /** ADC Data holder.
+     * A class to hold ADC values (FADC)
      */
-    
     public static class ADCData implements Comparable<ADCData> {
         
         private int    adcOrder        = 0;
@@ -185,9 +177,7 @@ public class DetectorDataDgtz implements Comparable<DetectorDataDgtz> {
         private long   pulseTimeStamp  = 0L;
 
         
-        private List<short[]>   adcPulse = new ArrayList<short[]>();
-        
-        private boolean isPedistalSubtracted = false;
+        private List<short[]>   adcPulse = new ArrayList<>();
         
         public ADCData(){
             
@@ -295,8 +285,6 @@ public class DetectorDataDgtz implements Comparable<DetectorDataDgtz> {
         }
         
         public ADCData setTimeWord(int timeWord){
-//            pulseTimeCourse = DataUtils.getInteger(timeWord, 0, 5);
-//            int timeFine    = DataUtils.getInteger(timeWord, 6, 16);
             int timeFine    = DataUtils.getInteger(timeWord, 0, 5);
             pulseTimeCourse = DataUtils.getInteger(timeWord, 6, 15);
             pulseTime = pulseTimeCourse*4.0 + timeFine*0.0625;
@@ -336,25 +324,29 @@ public class DetectorDataDgtz implements Comparable<DetectorDataDgtz> {
         }
     }
     
-   /**
-    * a class to hold TDC data
-    */
-    
+    /** TDC Data. 
+     *  A class to hold Multihit TDC data
+     *
+     */
     public static class TDCData implements Comparable<TDCData>{
         
-        private int   tdcOrder = 0;
-        private int tdcTime = 0;
+        private int tdcOrder = 0; // Used for sorting
+        private int tdcTime  = 0;
+        private int tdcToT   = 0; // Time over threshold
         
         public TDCData() {}
         public TDCData(int time) { this.tdcTime = time;}
+        public TDCData(int time, int ToT) { this.tdcTime = time; this.tdcToT = ToT;}
         public int getTime() { return this.tdcTime;}
-        public int   getOrder() { return tdcOrder;}
-        public TDCData  setOrder(int order) { tdcOrder = order;return this;}
-        public TDCData  setTime(short time) { tdcTime = time;return this;}
+        public int getToT() { return this.tdcToT;}
+        public int getOrder() { return tdcOrder;}
+        public TDCData setOrder(int order) { tdcOrder = order;return this;}
+        public TDCData setTime(short time) { tdcTime = time;return this;}
+        public TDCData setToT(short ToT) { tdcToT = ToT;return this;}
         
         @Override
         public String toString(){
-            return String.format("TDC (%d) : %5d", getOrder(),getTime());
+            return String.format("TDC (%d) : %5d : %5d", getOrder(),getTime(),getToT());
         }
 
         public int compareTo(TDCData o) {

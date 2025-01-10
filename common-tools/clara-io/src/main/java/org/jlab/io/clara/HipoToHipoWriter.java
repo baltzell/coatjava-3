@@ -11,6 +11,7 @@ import org.jlab.clara.std.services.AbstractEventWriterService;
 import org.jlab.clara.std.services.EventWriterException;
 import org.jlab.jnp.hipo4.data.Bank;
 import org.jlab.jnp.hipo4.data.Event;
+import org.jlab.jnp.hipo4.data.SchemaFactory;
 import org.jlab.jnp.hipo4.io.HipoWriter;
 import org.jlab.jnp.hipo4.io.HipoWriterSorted;
 import org.jlab.jnp.utils.file.FileUtils;
@@ -25,9 +26,12 @@ public class HipoToHipoWriter extends AbstractEventWriterService<HipoWriterSorte
     private static final String CONF_COMPRESSION = "compression";
     private static final String CONF_SCHEMA_DIR = "schema_dir";
     private static final String CONF_SCHEMA_FILTER = "schema_filter";
+    private static final String CONF_SCHEMA_WILDCARD = "wildcard";
+    
     private final List<Bank> schemaBankList = new ArrayList<Bank>();
     private final StringSubstitutor envSubstitutor = new StringSubstitutor(System.getenv());
 
+    private int compression = 2;
 
     @Override
     protected HipoWriterSorted createWriter(Path file, JSONObject opts) throws EventWriterException {
@@ -44,10 +48,10 @@ public class HipoToHipoWriter extends AbstractEventWriterService<HipoWriterSorte
     private void configure(HipoWriterSorted writer, JSONObject opts) {
         schemaBankList.clear();
         if (opts.has(CONF_COMPRESSION)) {
-            int compression = opts.getInt(CONF_COMPRESSION);
+            compression = opts.getInt(CONF_COMPRESSION);
             System.out.printf("%s service: compression level = %d%n", getName(), compression);
-            writer.setCompressionType(compression);
         }
+        writer.setCompressionType(compression);
 
         String schemaDir = FileUtils.getEnvironmentPath("CLAS12DIR", "etc/bankdefs/hipo4");
         if (opts.has(CONF_SCHEMA_DIR)) {
@@ -55,9 +59,19 @@ public class HipoToHipoWriter extends AbstractEventWriterService<HipoWriterSorte
             schemaDir = envSubstitutor.replace(schemaDir);
             System.out.printf("%s service: schema directory = %s%n", getName(), schemaDir);
         }
-        writer.getSchemaFactory().initFromDirectory(schemaDir);
 
-        if (opts.has(CONF_SCHEMA_DIR)) {
+        SchemaFactory factory = new SchemaFactory();
+        factory.initFromDirectory(schemaDir);
+
+        if(opts.has(CONF_SCHEMA_WILDCARD)==true){
+            String wildcard = opts.getString("wildcard");
+            SchemaFactory f2 = factory.reduce(wildcard);
+            writer.getSchemaFactory().copy(f2);
+        } else {
+            writer.getSchemaFactory().copy(factory);
+        }
+        
+        if (opts.has(CONF_SCHEMA_DIR)==true||opts.has(CONF_SCHEMA_WILDCARD)==true) {
             boolean useFilter = opts.optBoolean(CONF_SCHEMA_FILTER, true);
             System.out.printf("%s service: schema filter = %b%n", getName(), useFilter);
             if(useFilter==true){
@@ -68,6 +82,10 @@ public class HipoToHipoWriter extends AbstractEventWriterService<HipoWriterSorte
                 }
             }
         }
+        
+        System.out.printf("SERVICE WRITER :: [filter] %s\n",opts.has(HipoToHipoWriter.CONF_SCHEMA_FILTER));
+        System.out.printf("SERVICE WRITER :: [dir] %s\n",opts.has(HipoToHipoWriter.CONF_SCHEMA_DIR));
+        System.out.printf("SERVICE WRITER :: [wildcard] %s\n",opts.has(HipoToHipoWriter.CONF_SCHEMA_WILDCARD));
     }
 
     private Method getSchemaFilterSetter() throws NoSuchMethodException, SecurityException {

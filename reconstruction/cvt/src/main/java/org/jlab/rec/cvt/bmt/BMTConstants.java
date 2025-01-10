@@ -22,8 +22,13 @@ public class BMTConstants {
     //CUTS
     public static double MAXCLUSSIZE = 5;
     public static int MAXBMTHITS = 700;
+    
+    public static double BMTLINERESISNSIG=5;                        // cut to pass line with 3 BMT points
     //public static final int STARTINGLAYR = 5;						// current configuration is 3 SVT + 3BMT (outermost BST ring)
     public static double ETOTCUT = 0.0;
+    public static double HVLOEFFLOBOUND = 450.0;                    // lower bound for range within which a BMT strip is considered inefficient
+    public static double HVHIEFFUPBOUND = 480.0;                    // upper bound for range within which a BMT strip is considered inefficient
+            
     // THE GEOMETRY CONSTANTS
     public static final int NREGIONS = 3;						// 3 regions of MM 
     public static final int NLAYERS   = NREGIONS*2;					// 6 layer
@@ -78,6 +83,7 @@ public class BMTConstants {
     public static Line3D[][]   AXES = new Line3D[NLAYERS][NSECTORS];        // detector AXES
     public static Transformation3D[][] TOLOCAL  = new Transformation3D[NLAYERS][NSECTORS];
     public static Transformation3D[][] TOGLOBAL = new Transformation3D[NLAYERS][NSECTORS];
+    public static Transformation3D TOPOSITION = null;
     public static double[] ThetaL_grid = new double[405];    //Lorentz angle grid
     public static double[] E_grid = new double[405];         //Electric field value of the grid
     public static double[] B_grid = new double[405];        //Magnetic field value of the grid
