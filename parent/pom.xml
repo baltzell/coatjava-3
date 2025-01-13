@@ -75,7 +75,7 @@
     <dependency>
       <groupId>ai.djl.pytorch</groupId>
       <artifactId>pytorch-engine</artifactId>
-      <version>0.30.0</version>
+      <version>0.31.1</version>
       <scope>runtime</scope>
     </dependency>
 
