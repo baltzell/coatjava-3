@@ -35,9 +35,9 @@ public class AlignmentBankReader {
             Collections.sort(SVThits);
         }
         if(BMThits!=null) {
-            for(Hit hit : BMThits) {
-                hit.getStrip().calcBMTStripParams(hit.getSector(), hit.getLayer(), swimmer);
-            }
+            // for(Hit hit : BMThits) {
+            //     hit.getStrip().calcBMTStripParams(hit.getSector(), hit.getLayer(), swimmer);
+            // }
             Collections.sort(BMThits);
         }
 
@@ -96,9 +96,9 @@ public class AlignmentBankReader {
             Collections.sort(SVThits);
         }
         if(BMThits!=null) {
-            for(Hit hit : BMThits) {
-                hit.getStrip().calcBMTStripParams(hit.getSector(), hit.getLayer(), swimmer);
-            }
+            // for(Hit hit : BMThits) {
+            //     hit.getStrip().calcBMTStripParams(hit.getSector(), hit.getLayer(), swimmer);
+            // }
             Collections.sort(BMThits);
         }
 
