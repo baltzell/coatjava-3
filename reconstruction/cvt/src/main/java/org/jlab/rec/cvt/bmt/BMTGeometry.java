@@ -789,7 +789,7 @@ public class BMTGeometry {
             // CHECKME
             double edge   = this.getPhi(layer, sector) - this.getDPhi(layer, sector); // 30 150 270
             double pitch  = this.getZPitch(region,1);
-            double radius = this.getRadius(layer);
+            double radius = this.getRadiusMidDrift(layer);
             double dphi = angle - edge; 
             if(dphi<0) dphi += 2*Math.PI;
             strip = (int) Math.floor(dphi*radius/pitch) + 1;
