@@ -144,15 +144,16 @@
     "name" : "AHDC::adc",
     "group": 22400,
     "item" : 11,
-	"info": "ADC bank for the ALERT Wire Chamber",
-	"entries":[
-	  { "name":"sector"    , "type":"B", "info":"sector 1"},
-	  { "name":"layer"     , "type":"B", "info":"layer 1-5"},
-	  { "name":"component" , "type":"S", "info":"wire number"},
-	  { "name":"order"     , "type":"B", "info":"Stereo angle 0 - in, 1 - out"},
-          { "name":"ADC"       , "type":"I", "info":"ADC maximum"}, 
-          { "name":"time"      , "type":"F", "info":"time from pulse fit"},
-          { "name":"ped"       , "type":"S", "info":"pedestal from pulse analysis"}
+    "info": "ADC bank for the ALERT Wire Chamber",
+    "entries":[
+      { "name":"sector"    , "type":"B", "info":"sector 1"},
+      { "name":"layer"     , "type":"B", "info":"layer 1-5"},
+      { "name":"component" , "type":"S", "info":"wire number"},
+      { "name":"order"     , "type":"B", "info":"Stereo angle 0 - in, 1 - out"},
+      { "name":"ADC"       , "type":"I", "info":"ADC maximum"},
+      { "name":"time"      , "type":"F", "info":"time from pulse fit"},
+      { "name":"ped"       , "type":"S", "info":"pedestal from pulse analysis"},
+      { "name":"id"        , "type":"S", "info":"pointer to row in waveform bank"}
     ]
   },
   {
