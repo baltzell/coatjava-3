@@ -154,7 +154,10 @@ public class Truth {
         for (int i=0; i<validPids.size(); ++i) {
             s.append(String.format("%6d",validPids.get(i)));
             for (int j=0; j<validPids.size(); ++j) {
-                s.append(String.format("%7.4f",get(validPids.get(i),validPids.get(j))));
+                if (mcTallies[i] > 0)
+                    s.append(String.format("%7.4f",get(validPids.get(i),validPids.get(j))));
+                else
+                    s.append(String.format("%7s","-"));
                 if (validPids.size()==j+1) s.append("\n");
             }
         }
@@ -168,16 +171,19 @@ public class Truth {
     public JsonObject toJson() {
         JsonObject effs = new JsonObject();
         JsonArray pids = new JsonArray();
+        JsonObject gens = new JsonObject();
         for (int i=0; i<validPids.size(); ++i) {
             pids.add(validPids.get(i));
             JsonArray a = new JsonArray();
             for (int j=0; j<validPids.size(); ++j)
                 a.add(get(validPids.get(i),validPids.get(j)));
             effs.add(Integer.toString(validPids.get(i)),a);
+            gens.add(Integer.toString(validPids.get(i)), mcTallies[i]);
         }
         JsonObject ret = new JsonObject();
         ret.add("pids", pids);
         ret.add("effs", effs);
+        ret.add("gens", gens);
         return ret;
     }
 }
