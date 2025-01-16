@@ -3,6 +3,7 @@ package org.jlab.rec.cvt.alignment;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Collections;
+import java.util.Map;
 
 import org.jlab.detector.base.DetectorType;
 import org.jlab.geom.prim.Line3D;
@@ -26,11 +27,16 @@ import org.jlab.rec.cvt.trajectory.Helix;
  */
 public class AlignmentBankReader {
 
+    private Map<Integer,Cross>      _SVTcrosses;
+    private Map<Integer,Cluster>   _SVTclusters;
+    private Map<Integer,Cross>      _BMTcrosses;
+    private Map<Integer,Cluster>   _BMTclusters;
+
     public List<StraightTrack> getCosmics(DataEvent event) {
 
         
-        var SVThits = RecoBankReader.readBSTHitBank(event, "BST::Hits");
-        var BMThits = RecoBankReader.readBMTHitBank(event, "BMT::Hits");
+        List<Hit> SVThits = RecoBankReader.readBSTHitBank(event, "BSTRec::Hits");
+        List<Hit> BMThits = RecoBankReader.readBMTHitBank(event, "BMTRec::Hits");
         if(SVThits!= null) {
             Collections.sort(SVThits);
         }
@@ -41,20 +47,20 @@ public class AlignmentBankReader {
             Collections.sort(BMThits);
         }
 
-        var _SVTclusters = RecoBankReader.readBSTClusterBank(event, SVThits, "BSTRec::Clusters");
-        var _BMTclusters = RecoBankReader.readBMTClusterBank(event, BMThits, "BMTRec::Clusters");
+        _SVTclusters = RecoBankReader.readBSTClusterBank(event, SVThits, "BSTRec::Clusters");
+        _BMTclusters = RecoBankReader.readBMTClusterBank(event, BMThits, "BMTRec::Clusters");
         
         
-        var _SVTcrosses = RecoBankReader.readBSTCrossBank(event, _SVTclusters, "BSTRec::Crosses");
-        var _BMTcrosses = RecoBankReader.readBMTCrossBank(event, _BMTclusters, "BMTRec::Crosses");
+        _SVTcrosses = RecoBankReader.readBSTCrossBank(event, _SVTclusters, "BSTRec::Crosses");
+        _BMTcrosses = RecoBankReader.readBMTCrossBank(event, _BMTclusters, "BMTRec::Crosses");
         if(_SVTcrosses!=null) {
-            for(Cross cross : _SVTcrosses) {
+            for(Cross cross : _SVTcrosses.values()) {
                 cross.setCluster1(_SVTclusters.get(cross.getCluster1().getId()-1));
                 cross.setCluster2(_SVTclusters.get(cross.getCluster2().getId()-1)); 
             }
         }
         if(_BMTcrosses!=null) {
-            for(Cross cross : _BMTcrosses) {
+            for(Cross cross : _BMTcrosses.values()) {
                 cross.setCluster1(_BMTclusters.get(cross.getCluster1().getId()-1));
             }
         }
@@ -68,13 +74,13 @@ public class AlignmentBankReader {
             List<Cross> crosses = new ArrayList<>();
             for(Cross c : track) {
                 if(_SVTcrosses!=null && c.getDetector()==DetectorType.BST) {
-                    for(Cross cross : _SVTcrosses) {
+                    for(Cross cross : _SVTcrosses.values()) {
                         if(c.getId() == cross.getId())
                             crosses.add(cross);
                     }
                 }
                 if(_BMTcrosses!=null && c.getDetector()==DetectorType.BMT) {
-                    for(Cross cross : _BMTcrosses) {
+                    for(Cross cross : _BMTcrosses.values()) {
                         if(c.getId() == cross.getId())
                             crosses.add(cross);
                     }
@@ -90,8 +96,8 @@ public class AlignmentBankReader {
     public List<Track> getTracks(DataEvent event) {
 
         
-        var SVThits = RecoBankReader.readBSTHitBank(event, "BST::Hits");
-        var BMThits = RecoBankReader.readBMTHitBank(event, "BMT::Hits");
+        List<Hit> SVThits = RecoBankReader.readBSTHitBank(event, "BSTRec::Hits");
+        List<Hit> BMThits = RecoBankReader.readBMTHitBank(event, "BMTRec::Hits");
         if(SVThits!= null) {
             Collections.sort(SVThits);
         }
@@ -102,20 +108,20 @@ public class AlignmentBankReader {
             Collections.sort(BMThits);
         }
 
-        var _SVTclusters = RecoBankReader.readBSTClusterBank(event, SVThits, "BSTRec::Clusters");
-        var _BMTclusters = RecoBankReader.readBMTClusterBank(event, BMThits, "BMT::Clusters");
+        _SVTclusters = RecoBankReader.readBSTClusterBank(event, SVThits, "BSTRec::Clusters");
+        _BMTclusters = RecoBankReader.readBMTClusterBank(event, BMThits, "BMT::Clusters");
         
         
-        var _SVTcrosses = RecoBankReader.readBSTCrossBank(event, _SVTclusters, "BSTRec::Crosses");
-        var _BMTcrosses = RecoBankReader.readBMTCrossBank(event, _BMTclusters, "BMTRec::Crosses");
+        _SVTcrosses = RecoBankReader.readBSTCrossBank(event, _SVTclusters, "BSTRec::Crosses");
+        _BMTcrosses = RecoBankReader.readBMTCrossBank(event, _BMTclusters, "BMTRec::Crosses");
         if(_SVTcrosses!=null) {
-            for(Cross cross : _SVTcrosses) {
+            for(Cross cross : _SVTcrosses.values()) {
                 cross.setCluster1(_SVTclusters.get(cross.getCluster1().getId()-1));
                 cross.setCluster2(_SVTclusters.get(cross.getCluster2().getId()-1)); 
             }
         }
         if(_BMTcrosses!=null) {
-            for(Cross cross : _BMTcrosses) {
+            for(Cross cross : _BMTcrosses.values()) {
                 cross.setCluster1(_BMTclusters.get(cross.getCluster1().getId()-1));
             }
         }
@@ -132,13 +138,13 @@ public class AlignmentBankReader {
             List<Cross> crosses = new ArrayList<>();
             for(Cross c : track) {
                 if(_SVTcrosses!=null && c.getDetector()==DetectorType.BST) {
-                    for(Cross cross : _SVTcrosses) {
+                    for(Cross cross : _SVTcrosses.values()) {
                         if(c.getId() == cross.getId())
                             crosses.add(cross);
                     }
                 }
                 if(_BMTcrosses!=null && c.getDetector()==DetectorType.BMT) {
-                    for(Cross cross : _BMTcrosses) {
+                    for(Cross cross : _BMTcrosses.values()) {
                         if(c.getId() == cross.getId())
                             crosses.add(cross);
                     }
