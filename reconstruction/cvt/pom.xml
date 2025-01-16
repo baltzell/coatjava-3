@@ -18,8 +18,8 @@
 
     <dependencies>
 
-      <dependency>
-        <groupId>org.jlab.clas</groupId>
+    <dependency>
+      <groupId>org.jlab.clas</groupId>
         <artifactId>clas-jcsg</artifactId>
         <version>11.1.0-SNAPSHOT</version>
       </dependency>
