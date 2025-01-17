@@ -153,7 +153,7 @@
       { "name":"ADC"       , "type":"I", "info":"ADC maximum"},
       { "name":"time"      , "type":"F", "info":"time from pulse fit"},
       { "name":"ped"       , "type":"S", "info":"pedestal from pulse analysis"},
-      { "name":"id"        , "type":"S", "info":"pointer to row in waveform bank"}
+      { "name":"windex"    , "type":"S", "info":"row index in waveform bank"}
     ]
   },
   {
