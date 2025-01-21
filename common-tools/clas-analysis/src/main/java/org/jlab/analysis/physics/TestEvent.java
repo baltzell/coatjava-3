@@ -1,12 +1,12 @@
 package org.jlab.analysis.physics;
 
-import java.io.File;
 import org.jlab.io.hipo.HipoDataEvent;
 import org.jlab.jnp.hipo4.data.Bank;
 import org.jlab.jnp.hipo4.data.Event;
 import org.jlab.jnp.hipo4.data.SchemaFactory;
 import org.jlab.jnp.hipo4.io.HipoReader;
 import org.jlab.jnp.hipo4.io.HipoWriterSorted;
+import org.jlab.utils.CLASResources;
 
 /**
  *
@@ -15,31 +15,26 @@ import org.jlab.jnp.hipo4.io.HipoWriterSorted;
 public class TestEvent {
 
     public static void main(String args[]) {
-        writeDCSector1ElectronEvent();
+        //writeDCSector1ElectronEvent();
         getDCSector1ElectronEvent(0).show();
     }
 
-    public static void writeDCSector1ElectronEvent() {
-        HipoWriterSorted writer = new HipoWriterSorted();
-        writer.setCompressionType(2);
-        writer.getSchemaFactory().initFromDirectory("/Users/baltzell/sw/coatjava/dev/etc/bankdefs/hipo4");
-        writer.open("/Users/baltzell/org.jlab.analysis.physics.TestEvent.hipo");
-        HipoDataEvent e = getDCSector1ElectronEvent(writer.getSchemaFactory());
-        writer.addEvent(e.getHipoEvent());
-        writer.close();
+    public static void writeDCSector1ElectronEvent(String path) {
+        try (HipoWriterSorted writer = new HipoWriterSorted()) {
+            writer.setCompressionType(2);
+            writer.getSchemaFactory().initFromDirectory(CLASResources.getResourcePath("etc/bankdefs/hipo4"));
+            writer.open(path);
+            HipoDataEvent e = getDCSector1ElectronEvent(writer.getSchemaFactory());
+            writer.addEvent(e.getHipoEvent());
+        }
     }
-    
+
     public static HipoDataEvent getDCSector1ElectronEvent(int event) {
         HipoReader reader = new HipoReader();
+        reader.open(CLASResources.getResourcePath("etc/data/test/dc.hipo"));
         Event e = new Event();
-        try {
-            File file = new File(TestEvent.class.getResource("/test/TestEvent.hipo").toURI());
-            reader.open(file.getAbsolutePath());//"/Users/baltzell/org.jlab.analysis.physics.TestEvent.hipo");
-            reader.getEvent(e, event);
-            return new HipoDataEvent(e,reader.getSchemaFactory());
-        } catch (java.net.URISyntaxException x) {
-            return null;
-        }
+        reader.getEvent(e, event);
+        return new HipoDataEvent(e,reader.getSchemaFactory());
     }
 
 	public static HipoDataEvent getDCSector1ElectronEvent(SchemaFactory schemaFactory) {
