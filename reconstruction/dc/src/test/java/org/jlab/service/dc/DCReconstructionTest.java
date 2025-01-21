@@ -10,6 +10,7 @@ import org.jlab.analysis.physics.TestEvent;
 import org.jlab.analysis.math.ClasMath;
 
 import org.jlab.clas.swimtools.MagFieldsEngine;
+import org.jlab.detector.base.DetectorType;
 import org.jlab.logging.DefaultLogger;
 import org.jlab.utils.CLASResources;
 
@@ -35,7 +36,7 @@ public class DCReconstructionTest {
         e.printStackTrace();
     }
 
-    DataEvent testEvent = TestEvent.getDCSector1ElectronEvent(0);
+    DataEvent testEvent = TestEvent.get(DetectorType.DC);
 
     MagFieldsEngine enf = new MagFieldsEngine();
     enf.init();

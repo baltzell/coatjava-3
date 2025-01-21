@@ -1,5 +1,6 @@
 package org.jlab.analysis.physics;
 
+import org.jlab.detector.base.DetectorType;
 import org.jlab.io.hipo.HipoDataEvent;
 import org.jlab.jnp.hipo4.data.Bank;
 import org.jlab.jnp.hipo4.data.Event;
@@ -15,19 +16,36 @@ import org.jlab.utils.CLASResources;
 public class TestEvent {
 
     public static void main(String args[]) {
-        //writeDCSector1ElectronEvent();
-        getDCSector1ElectronEvent(0).show();
+        write();
+        //getDCSector1ElectronEvent(0).show();
     }
 
-    public static void writeDCSector1ElectronEvent(String path) {
+    public static HipoDataEvent get(DetectorType t) {
+        HipoReader reader = new HipoReader();
+        String dir = CLASResources.getResourcePath("etc/data/test");
+        String stub = t.getName().toLowerCase();
+        reader.open(String.format("%s/%s.hipo",dir,stub));
+        Event e = new Event();
+        reader.getEvent(e, 0);
+        return new HipoDataEvent(e,reader.getSchemaFactory());
+    }
+
+    private static void write() {
+        SchemaFactory sf = new SchemaFactory();
+        sf.initFromDirectory(CLASResources.getResourcePath("etc/bankdefs/hipo4"));
+        write( "dc.hipo",getDCSector1ElectronEvent(sf).getHipoEvent());
+        write( "cvt.hipo",getCVTTestEvent(sf).getHipoEvent());
+        write( "ecal.hipo",getECSector1PhotonEvent(sf).getHipoEvent());
+    }
+
+    private static void write(String path, Event e) {
         try (HipoWriterSorted writer = new HipoWriterSorted()) {
             writer.setCompressionType(2);
             writer.getSchemaFactory().initFromDirectory(CLASResources.getResourcePath("etc/bankdefs/hipo4"));
             writer.open(path);
-            HipoDataEvent e = getDCSector1ElectronEvent(writer.getSchemaFactory());
-            writer.addEvent(e.getHipoEvent());
+            writer.addEvent(e);
         }
-    }
+    } 
 
     public static HipoDataEvent getDCSector1ElectronEvent(int event) {
         HipoReader reader = new HipoReader();
@@ -298,7 +316,6 @@ public class TestEvent {
                 HipoDataEvent hipoEvent = new HipoDataEvent(testEvent,schemaFactory);
 		return hipoEvent;
 	}
-
 
 	public static HipoDataEvent getECSector1PhotonEvent(SchemaFactory schemaFactory) {
 		Event testEvent = new Event();
