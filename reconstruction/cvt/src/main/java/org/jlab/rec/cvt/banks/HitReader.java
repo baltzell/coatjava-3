@@ -245,6 +245,7 @@ public class HitReader {
             //In which case all the SVT hits are unreliable and they should all be discarted
             //Starting from Fall 2018 all events would have ADC=-1 and this is normal.
             //This ADC=-1 status is in a ccdb table
+            //The value adcStatus in ccdb is 1 for runs where ADC=-1 is not permitted and 0 for runs where ADC=-1 is permitted
             boolean pass=true;
             int adcStat = adcStatus.getIntValue("adcstatus", 0, 0, 0);
 //            for (int i = 0; i < rows; i++) {     
@@ -345,11 +346,14 @@ public class HitReader {
                 //    continue;
                 // create the strip object with the adc value converted to daq value used for cluster-centroid estimate
                 
-                boolean isMC = event.hasBank("MC::Particle");
-                double E = ADCConvertor.SVTADCtoDAQ(ADC, isMC);
+                //boolean isMC = event.hasBank("MC::Particle");
+                double E = ADCConvertor.SVTADCtoDAQ(ADC);
                 if(E==-1) 
                     continue;
                 
+                if(event.hasBank("MC::Particle") && ADC==-5) { //geantinos
+                    E=1;
+                }
                 Strip SvtStrip = new Strip(strip, E, time); 
                 SvtStrip.setPitch(SVTGeometry.getPitch());
                 // get the strip line

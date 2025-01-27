@@ -12,10 +12,15 @@ public class ADCConvertor {
     }
 
     public static boolean isEventUnCorrupted(int adc, int adcstat) {
+        //The value adcStatus is 1 for runs where adc=-1 is permitted and 0 for runs where adc=-1 is NOT permitted
+        //
         boolean pass = true;
-        if(adc==-1 && adc*adcstat==0) //0: event corrupted; -1 event is OK
-            pass=false;
-        
+        if(adc==-1) {
+            if(adcstat==0) //0: event corrupted; 1 event is OK
+                pass=false;
+            if(adcstat==1) 
+                pass=true;
+        }
         return pass;
     }
      /**
@@ -24,11 +29,8 @@ public class ADCConvertor {
      * test stand analysis
      * @return 
      */
-    public static double SVTADCtoDAQ(int adc, boolean isMC) {
+    public static double SVTADCtoDAQ(int adc) {
         
-        if(isMC && adc == -5) {
-            return 1; // this is for running with Geantinos.  Geantinos have adc -5
-        }
         if (adc < 0 || adc > 7) {
             return -1;
         }
