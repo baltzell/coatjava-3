@@ -141,7 +141,6 @@ public class KalmanFilter {
 			RealVector initialStateEstimate   = new ArrayRealVector(stepper.y);
 			//first 3 lines in cm^2; last 3 lines in MeV^2
 			RealMatrix initialErrorCovariance = MatrixUtils.createRealMatrix(new double[][]{{1.00, 0.0, 0.0, 0.0, 0.0, 0.0}, {0.0, 1.00, 0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 25.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 1.00, 0.0, 0.0}, {0.0, 0.0, 0.0, 0.0, 1.00, 0.0}, {0.0, 0.0, 0.0, 0.0, 0.0, 25.0}});
-						
 			KFitter kFitter = new KFitter(initialStateEstimate, initialErrorCovariance, stepper, propagator);
 
 			/*
@@ -173,10 +172,11 @@ public class KalmanFilter {
 			// 	}
 			// }
 			
-			for (int k = 0; k < 10; k++) {
+			for (int k = 0; k < 5; k++) {
 
 			    //System.out.println("--------- ForWard propagation !! ---------");
-
+			    //Reset error covariance:
+			    //kFitter.ResetErrorCovariance(initialErrorCovariance);
 				for (Indicator indicator : forwardIndicators) {
 					kFitter.predict(indicator);
 					//System.out.println("indicator R " + indicator.R + " h "  + indicator.h + "; y =  " + kFitter.getStateEstimationVector() + " p = " + kFitter.getMomentum());

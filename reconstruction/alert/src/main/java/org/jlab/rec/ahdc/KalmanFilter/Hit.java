@@ -106,37 +106,35 @@ public class Hit implements Comparable<Hit> {
 		this.line3D = wireLine;
 	}
     
-    //hit measurement vector in cylindrical coordinates: r, phi, z
-        public RealVector get_Vector() {
-	    // final double costhster = Math.cos(thster);
-	    // final double sinthster = Math.cos(thster);
-	    RealVector wire_meas = new ArrayRealVector(new double[]{this.r(), this.phi(), 0});
-	    // Array2DRowRealMatrix stereo_rotation = new Array2DRowRealMatrix(new double[][]{{1, 0.0, 0.0}, {0, costhster, -sinthster}, {0, sinthster, costhster}});//rotation of wire: needed?
-	    return wire_meas;//.multiply(stereo_rotation);
-	}
+        // //hit measurement vector in cylindrical coordinates: r, phi, z
+        // public RealVector get_Vector() {
+	//     RealVector wire_meas = new ArrayRealVector(new double[]{this.r(), this.phi(), 0.0});
+	//     // 2-dim matrices
+	//     // RealVector wire_meas = new ArrayRealVector(new double[]{this.r(), this.phi()});
+	//     return wire_meas;
+	// }
 
-    //hit measurement vector in 1 dimension: minimize distance - doca
+        // public RealVector get_Vector_z(double z) {
+	//     RealVector wire_meas = new ArrayRealVector(new double[]{this.r(), this.phi(z), z});
+	//     return wire_meas;
+	// }
+
+        //hit measurement vector in 1 dimension: minimize distance - doca
         public RealVector get_Vector_simple() {
 		return new ArrayRealVector(new double[]{this.doca});
 	}
 
-    //hit measurement vector in 1 dimension: minimize distance - doca - adds hit "sign"
-        public RealVector get_Vector_sign(int sign) {
- 	    // Attempt: multiply doca by sign
-		return new ArrayRealVector(new double[]{sign*this.doca});
-	}
-
-        public RealMatrix get_MeasurementNoise() {
-	    final double costhster = Math.cos(thster);
-	    final double sinthster = Math.cos(thster);
-	    //dR = 0.1m dphi = pi dz = L/2 
-	    Array2DRowRealMatrix wire_noise = new Array2DRowRealMatrix(new double[][]{{0.1, 0.0, 0.0}, {0.0, Math.atan(0.1/this.r), 0.0}, {0.0, 0.0, 150.0/costhster}});//uncertainty matrix in wire coordinates
-	    Array2DRowRealMatrix stereo_rotation = new Array2DRowRealMatrix(new double[][]{{1, 0.0, 0.0}, {0, costhster, -sinthster}, {0, sinthster, costhster}});//rotation of wire
-	    wire_noise.multiply(stereo_rotation);
-	    
-	    return wire_noise.multiply(wire_noise);
-	    //
-	}
+        // public RealMatrix get_MeasurementNoise() {
+	//     final double costhster = Math.cos(thster);
+	//     final double sinthster = Math.cos(thster);
+	//     //dR = 0.1m dphi = pi dz = L/2
+	//     // 3-dim matrices
+	//     Array2DRowRealMatrix wire_noise = new Array2DRowRealMatrix(new double[][]{{0.01, 0.0, 0.0}, {0.0, Math.pow( (phi(-zl*0.5)+phi(zl*0.5))*0.5 , 2), 0.0}, {0.0, 0.0, zl*zl*0.25}} );//uncertainty matrix in wire coordinates
+	//     // trying 2-dim matrices
+	//     //Array2DRowRealMatrix wire_noise = new Array2DRowRealMatrix(new double[][]{{0.01, 0.0}, {0.0, Math.pow( (phi(-zl*0.5)+phi(zl*0.5))*0.5 , 2)} );//uncertainty matrix in wire coordinates
+	//     return wire_noise;
+	//     //
+	// }
 
     	public RealMatrix get_MeasurementNoise_simple() {
 	    return new Array2DRowRealMatrix(new double[][]{{0.01}});

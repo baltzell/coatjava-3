@@ -94,9 +94,10 @@ public class KFitter {
 			h = h_beam(stateEstimation);//3x1
 			z = indicator.hit.get_Vector_beam();//0!
 		} else {
+		    //    double wire_sg = wire_sign(indicator); 
 		        measurementNoise = indicator.hit.get_MeasurementNoise_simple();//1x1
 		        measurementMatrix = H_simple(stateEstimation, indicator);//6x1
-		        h = h_simple(stateEstimation, indicator);//.multiply(wire_sign_mat(indicator));//1x1
+		        h = h_simple(stateEstimation, indicator);//1x1
 			z = indicator.hit.get_Vector_simple();//1x1
 			
 		        // measurementNoise = indicator.hit.get_MeasurementNoise();//3x3
@@ -151,7 +152,10 @@ public class KFitter {
 	// 	System.out.println(" phi state " + phi_state + " phi wire " + phi_wire);//  + " phi state alt? " + Math.atan2(stateEstimation.getEntry(1), stateEstimation.getEntry(0)));
 	// 	return MatrixUtils.createRealMatrix(new double[][]{{(phi_state-phi_wire)/Math.abs(phi_state-phi_wire)}});
 	// }
-
+        public void ResetErrorCovariance(final RealMatrix initialErrorCovariance){
+	      this.errorCovariance = initialErrorCovariance;  
+        }
+    
 	private RealMatrix F(Indicator indicator, Stepper stepper1) throws Exception {
 
 		double[] dfdx  = subfunctionF(indicator, stepper1, 0);
@@ -166,7 +170,7 @@ public class KFitter {
 	}
 
 	double[] subfunctionF(Indicator indicator, Stepper stepper1, int i) throws Exception {
-		double  h             = 1e-8;
+		double  h             = 1e-5;//1e-8;// in mm
 		Stepper stepper_plus  = new Stepper(stepper1.y);
 		Stepper stepper_minus = new Stepper(stepper1.y);
 
@@ -195,6 +199,7 @@ public class KFitter {
 	        double xx = x.getEntry(0);
 	        double yy = x.getEntry(1);
 		return MatrixUtils.createRealVector(new double[]{Math.hypot(xx, yy), Math.atan2(yy, xx), x.getEntry(2)});
+		//return MatrixUtils.createRealVector(new double[]{Math.hypot(xx, yy), Math.atan2(yy, xx)});
 	}
 
     //measurement matrix in 1 dimension: minimize distance - doca
@@ -202,6 +207,11 @@ public class KFitter {
 		double d = indicator.hit.distance(new Point3D(x.getEntry(0), x.getEntry(1), x.getEntry(2)));
 		return MatrixUtils.createRealVector(new double[]{d});//would need to have this 3x3
 	}
+
+    // private RealVector h_simple_sign(RealVector x, Indicator indicator, double sign) {
+    // 		double d = indicator.hit.distance(new Point3D(x.getEntry(0), x.getEntry(1), x.getEntry(2)));
+    // 		return MatrixUtils.createRealVector(new double[]{d*sign});//would need to have this 3x3
+    // 	}
 
     //measurement noise matrix in cylindrical coordinates: r, phi, z
         private RealMatrix H(RealVector x, Indicator indicator) {
@@ -254,7 +264,7 @@ public class KFitter {
 	}
 
 	double subfunctionH(RealVector x, Indicator indicator, int i) {
-		double     h       = 1e-8;
+		double     h       = 1e-5;//1e-8;// in mm
 		RealVector x_plus  = x.copy();
 		RealVector x_minus = x.copy();
 
