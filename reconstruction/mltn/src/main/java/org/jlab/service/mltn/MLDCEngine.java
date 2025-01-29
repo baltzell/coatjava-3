@@ -18,7 +18,8 @@ import org.jlab.jnp.hipo4.data.Bank;
 import org.jlab.jnp.hipo4.data.CompositeBank;
 
 /**
- *
+ * This service, will save the minimal information from DC tracking that can be
+ * used to train AI models and run validations.
  * @author gavalian
  */
 public class MLDCEngine extends ReconstructionEngine {
@@ -39,15 +40,10 @@ public class MLDCEngine extends ReconstructionEngine {
         List<ByteBuffer> trackBuffers = new ArrayList<>();
         
         if(de.hasBank("TimeBasedTrkg::TBTracks")&&de.hasBank("TimeBasedTrkg::TBClusters")){
-            //System.out.println("writing trakcing bank");
             DataBank   tbt = de.getBank("TimeBasedTrkg::TBTracks");
             DataBank   tbc = de.getBank("TimeBasedTrkg::TBClusters");
             ByteBuffer bb = getTracks(tbt,tbc,10);
             trackBuffers.add(bb);
-            /*DataBank output = de.createBank("MLDC::tracks", bb.array().length);
-            for(int j = 0; j < bb.array().length; j++)
-                output.setByte("bytes", j,bb.array()[j]);
-            de.appendBank(output);*/
         }
         
         if(de.hasBank("TimeBasedTrkg::AITracks")&&de.hasBank("TimeBasedTrkg::AIClusters")){
@@ -119,8 +115,6 @@ public class MLDCEngine extends ReconstructionEngine {
             int offset = j*bsize;
             int charge = (int) ht.getByte("q",j);
             int     ps = status + (charge<0?2:1);
-            //System.out.printf(" row = %4d , status = %5d, charge = %3d, pstat = %5d\n",
-            //        j,status,charge,ps);
             b.putShort(offset+0, (short) ps);
             b.putFloat(offset+2, 0.0f);
             b.putShort(offset+6, (short) ht.getByte("sector",j));
