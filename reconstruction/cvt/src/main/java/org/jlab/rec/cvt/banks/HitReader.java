@@ -351,9 +351,6 @@ public class HitReader {
                 if(E==-1) 
                     continue;
                 
-                if(event.hasBank("MC::Particle") && ADC==-5) { //geantinos
-                    E=1;
-                }
                 Strip SvtStrip = new Strip(strip, E, time); 
                 SvtStrip.setPitch(SVTGeometry.getPitch());
                 // get the strip line
