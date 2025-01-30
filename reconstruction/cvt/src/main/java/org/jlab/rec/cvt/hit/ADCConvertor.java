@@ -12,13 +12,13 @@ public class ADCConvertor {
     }
 
     public static boolean isEventUnCorrupted(int adc, int adcstat) {
-        //The value adcStatus is 1 for runs where adc=-1 is permitted and 0 for runs where adc=-1 is NOT permitted
+        //The value adcStatus is 0 for runs where adc=-1 is permitted and 1 for runs where adc=-1 is NOT permitted
         //
         boolean pass = true;
         if(adc==-1) {
-            if(adcstat==0) //0: event corrupted; 1 event is OK
+            if(adcstat==1) //1: event corrupted; 0 event is OK
                 pass=false;
-            if(adcstat==1) 
+            if(adcstat==0) 
                 pass=true;
         }
         return pass;
