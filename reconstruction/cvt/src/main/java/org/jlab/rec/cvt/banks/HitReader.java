@@ -246,16 +246,15 @@ public class HitReader {
             //Starting from Fall 2018 all events would have ADC=-1 and this is normal.
             //This ADC=-1 status is in a ccdb table
             //The value adcStatus in ccdb is 1 for runs where ADC=-1 is not permitted and 0 for runs where ADC=-1 is permitted
-            boolean pass=true;
+            
             int adcStat = adcStatus.getIntValue("adcstatus", 0, 0, 0);
-//            for (int i = 0; i < rows; i++) {     
-//                int ADC = bankDGTZ.getInt("ADC", i);
-//                if(ADCConvertor.isEventCorrupted(ADC, adcStat)==false) {
-//                    pass=false;
-//                }
-//            }
-//            if(pass==false) 
-//                return;
+            for (int i = 0; i < rows; i++) {     
+                int ADC = bankDGTZ.getInt("ADC", i);
+                if(ADCConvertor.isEventUnCorrupted(ADC, adcStat)==false) {
+                    return;
+                }
+            }
+            
             //bankDGTZ.show();
             // first get tdcs
             Map<Integer, Double> tdcs = new HashMap<>();
@@ -368,13 +367,8 @@ public class HitReader {
                 hit.setId(id);
                 if (Constants.getInstance().flagSeeds)
                     hit.MCstatus = order;
-                if(!ADCConvertor.isEventUnCorrupted(ADC, adcStat)) {
-                    hit.isCorrupted=true;
-                }
                 // add this hit
-                
-                if(hit.getRegion()!=Constants.getInstance().getRmReg()
-                        && !hit.isCorrupted) {     
+                if(hit.getRegion()!=Constants.getInstance().getRmReg()) {     
                     if(Constants.getInstance().useOnlyMCTruthHits() ) {
                         if(hit.MCstatus==0)
                             hits.add(hit);
