@@ -3,7 +3,8 @@ name: Release
 on: push
 
 jobs:
-  build:
+  release:
+    needs: [ build ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
