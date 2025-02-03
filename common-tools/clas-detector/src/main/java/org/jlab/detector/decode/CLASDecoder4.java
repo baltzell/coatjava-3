@@ -1,5 +1,7 @@
 package org.jlab.detector.decode;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import org.jlab.detector.scalers.DaqScalers;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,8 +27,11 @@ import org.jlab.io.hipo.HipoDataEvent;
 import org.jlab.io.hipo.HipoDataSync;
 
 import org.jlab.jnp.hipo4.data.Bank;
+import org.jlab.jnp.hipo4.data.DataType;
 import org.jlab.jnp.hipo4.data.Event;
+import org.jlab.jnp.hipo4.data.Node;
 import org.jlab.jnp.hipo4.data.SchemaFactory;
+import org.jlab.jnp.hipo4.io.HipoReader;
 import org.jlab.jnp.hipo4.io.HipoWriterSorted;
 
 import org.jlab.utils.benchmark.ProgressPrintout;
@@ -759,6 +764,7 @@ public class CLASDecoder4 {
         parser.addOption("-d", "0","debug mode, set >0 for more verbose output");
         parser.addOption("-m", "run","translation tables source (use -m devel for development tables)");
         parser.addOption("-b", "16","record buffer size in MB");
+        parser.addOption("-evio", "0","flag to write EVIO into the file [1-write evio event]");
         parser.addRequired("-o","output.hipo");
 
 
@@ -795,6 +801,7 @@ public class CLASDecoder4 {
         int compression = parser.getOption("-c").intValue();
         int  recordsize = parser.getOption("-b").intValue();
         int debug = parser.getOption("-d").intValue();
+        int writeEvio = parser.getOption("-evio").intValue();
 
         CLASDecoder4 decoder = new CLASDecoder4(developmentMode);
 
@@ -832,13 +839,27 @@ public class CLASDecoder4 {
         TreeSet<HelicityState> helicityReadings = new TreeSet<>();
 
         for(String inputFile : inputList){
-            EvioSource reader = new EvioSource();
+            Event event = new Event();
+            HipoReader reader = new HipoReader();
             reader.open(inputFile);
+            //EvioSource reader = new EvioSource();
+            //reader.open(inputFile);
            
-            while(reader.hasEvent()==true){
-                EvioDataEvent event = (EvioDataEvent) reader.getNextEvent();
+            while(reader.hasNext()==true){
                 
-                Event  decodedEvent = decoder.getDataEvent(event);
+                reader.nextEvent(event);
+                
+                Node node = event.read(1, 11);
+                byte[] data = node.getByte();
+                
+                EvioDataEvent  evioEvent = new EvioDataEvent(data,ByteOrder.LITTLE_ENDIAN);
+                //EvioDataEvent event = (EvioDataEvent) reader.getNextEvent();
+                
+                int position = event.scan(1, 12);
+                int   length = event.scanLengthAt(1, 12, position);
+                //System.out.printf("position = %d, length = %d\n",position,length);
+                
+                Event  decodedEvent = decoder.getDataEvent(evioEvent);
                 
                 Bank   header = decoder.createHeaderBank( nrun, counter, (float) torus, (float) solenoid);
                 if(header!=null) decodedEvent.write(header);
@@ -846,7 +867,7 @@ public class CLASDecoder4 {
                 if(trigger!=null) decodedEvent.write(trigger);
                 Bank onlineHelicity = decoder.createOnlineHelicityBank();
                 if(onlineHelicity!=null) decodedEvent.write(onlineHelicity);
-                Bank decodedHelicity = decoder.createHelicityDecoderBank(event);
+                Bank decodedHelicity = decoder.createHelicityDecoderBank(evioEvent);
                 if (decodedHelicity!=null) decodedEvent.write(decodedHelicity);
                 
                 Bank epics = decoder.createEpicsBank();
@@ -877,6 +898,30 @@ public class CLASDecoder4 {
                     }
 
                     writer.addEvent(scalerEvent, 1);
+                }
+                
+                /*if(writeEvio>0){
+                    int size = event.getEventBuffer().getInt(0);                    
+                    //System.out.printf(" size = %d (%d) \n", size, size*4);
+                    int length = size*4+8;
+                    if(length<100*1024){
+                        //byte[] nodeBytes = new byte[length];
+                        //System.arraycopy(event.getEventBuffer().array(), 0, nodeBytes, 0, length);
+                        Node node = new Node(1,11,DataType.BYTE,length);
+                        for(int i = 0; i < length; i++) node.setByte(i, event.getEventBuffer().array()[i]);
+                        decodedEvent.write(node);
+                    }
+                }*/
+                
+                if(position>0){
+                    int  evtSize = decodedEvent.getEventBufferSize();
+                    
+                    decodedEvent.require(evtSize+length+24,true);
+                    ByteBuffer b = decodedEvent.getEventBuffer();
+                    int        offset = b.getInt(4);
+                    
+                    System.arraycopy(event.getEventBuffer().array(), position, b.array(), evtSize, length+8);
+                    b.putInt(4, evtSize+8+length);
                 }
                 
                 writer.addEvent(decodedEvent,0);
