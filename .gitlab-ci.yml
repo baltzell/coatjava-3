@@ -13,6 +13,8 @@ default:
   retry: 2
 
 coatjava_build:
+  tags: 
+    - silicon
   image: gcr.io/kaniko-project/executor:debug
   script:
     - >-
