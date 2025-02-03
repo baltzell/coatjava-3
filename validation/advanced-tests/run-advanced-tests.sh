@@ -1,4 +1,4 @@
-#!/bin/sh -f
+#!/bin/bash -f
 
 # coatjava must already be built at ../../coatjava/
 
@@ -22,7 +22,7 @@ $COAT/bin/decoder -t -0.5 -s 0.0 -i ./twoTrackEvents_809_raw.evio -o ./twoTrackE
 [ $? -ne 0 ] && echo "decoder failure" && exit 3
 
 # run clara
-$COAT/bin/run-clara $COAT/etc/services/kpp.yaml
+$COAT/bin/run-clara -y $COAT/etc/services/kpp.yaml ./twoTrackEvents_809.hipo
 [ $? -ne 0 ] && echo "reconstruction with clara failure" && exit 4
 
 # compile test codes
