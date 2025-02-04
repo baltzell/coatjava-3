@@ -10,6 +10,8 @@ workflow:
 default:
   image: ubuntu:noble
   retry: 2
+  tags:
+    - silicon
 
 coatjava_build:
   image: gcr.io/kaniko-project/executor:debug
@@ -38,9 +40,4 @@ shared_for_alert_tests:
     project: hallb/alert/atof/shared_for_alert
     strategy: depend
 
-
-run_gemc:
-  image: jeffersonlab/gemc:dev-ubuntu24
-  script: 
-    - gemc --help
 
