@@ -73,8 +73,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner:
-          - ubuntu-latest
         id:
           - kpp
           - eb-ep
@@ -88,6 +86,8 @@ jobs:
           - eb-epiC
           - eb-ekC
           - eb-eFTp
+        runner:
+          - ubuntu-latest
         include:
           # run all tests on ubuntu
           - { id: kpp,      cmd: ./run-advanced-tests.sh }
@@ -103,7 +103,7 @@ jobs:
           - { id: eb-ekC,   cmd: ./run-eb-tests.sh -100 electronkaonC    }
           - { id: eb-eFTp,  cmd: ./run-eb-tests.sh -100 electronFTproton }
           # run one macos test
-          - { runner: macos-latest, id: eb-ep, cmd: ./run-eb-tests.sh -100 electronproton }
+          - { id: eb-ep, runner: macos-latest, cmd: ./run-eb-tests.sh -100 electronproton }
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
