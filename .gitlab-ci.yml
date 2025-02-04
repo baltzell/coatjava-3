@@ -38,3 +38,9 @@ shared_for_alert_tests:
     project: hallb/alert/atof/shared_for_alert
     strategy: depend
 
+
+run_gemc:
+  image: jeffersonlab/gemc:dev-ubuntu24
+  script: 
+    - gemc --help
+
