@@ -71,7 +71,7 @@ jobs:
   test_coatjava:
     needs: [ build ]
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         runner:
           - ubuntu-latest
@@ -79,17 +79,29 @@ jobs:
           - kpp
           - eb-ep
           - eb-eg
-          - eb-epc
-          - eb-enc
-          - eb-eftpi
+          - eb-epC
+          - eb-enC
+          - eb-eFTpi
+          - eb-epi
+          - eb-ek
+          - eb-en
+          - eb-epiC
+          - eb-ekC
+          - eb-eFTp
         include:
           # run all tests on ubuntu
           - { id: kpp,      cmd: ./run-advanced-tests.sh }
           - { id: eb-ep,    cmd: ./run-eb-tests.sh -100 electronproton   }
           - { id: eb-eg,    cmd: ./run-eb-tests.sh -100 electrongamma    }
-          - { id: eb-epc,   cmd: ./run-eb-tests.sh -100 electronprotonC  }
-          - { id: eb-enc,   cmd: ./run-eb-tests.sh -100 electronneutronC }
-          - { id: eb-eftpi, cmd: ./run-eb-tests.sh -100 electronFTpion   }
+          - { id: eb-epC,   cmd: ./run-eb-tests.sh -100 electronprotonC  }
+          - { id: eb-enC,   cmd: ./run-eb-tests.sh -100 electronneutronC }
+          - { id: eb-eFTpi, cmd: ./run-eb-tests.sh -100 electronFTpion   }
+          - { id: eb-epi,   cmd: ./run-eb-tests.sh -100 electronpion     }
+          - { id: eb-ek,    cmd: ./run-eb-tests.sh -100 electronkaon     }
+          - { id: eb-en,    cmd: ./run-eb-tests.sh -100 electronneutron  }
+          - { id: eb-epiC,  cmd: ./run-eb-tests.sh -100 electronpionC    }
+          - { id: eb-ekC,   cmd: ./run-eb-tests.sh -100 electronkaonC    }
+          - { id: eb-eFTp,  cmd: ./run-eb-tests.sh -100 electronFTproton }
           # run one macos test
           - { runner: macos-latest, id: eb-ep, cmd: ./run-eb-tests.sh -100 electronproton }
     runs-on: ${{ matrix.runner }}
