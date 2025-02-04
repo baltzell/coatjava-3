@@ -1,5 +1,153 @@
 [
 	{
+                "name": "AHDC::Projections",
+                "group": 23000,
+                "item": 31,
+                "info": "Track Projections to ATOF",
+                "entries": [		
+                        {
+                                "name": "x_at_bar",
+                                "type": "F",
+                                "info": "x position at atof bar (middle surface) in mm"
+                        }, {
+			        "name": "y_at_bar",
+                                "type": "F",
+                                "info": "y position at atof bar (middle surface) in mm"
+                        }, {
+                                "name": "z_at_bar",
+                                "type": "F",
+                                "info": "z position at atof bar (middle surface) in mm"			    
+                        },{
+                                "name": "L_at_bar",
+                                "type": "F",
+                                "info": "path length at atof bar (inner surface) in mm" 
+                        },{
+                                "name": "L_in_bar",
+                                "type": "F",
+                                "info": "path length inside atof bar in mm"
+                        },{
+                                "name": "x_at_wedge",
+                                "type": "F",
+                                "info": "x position at atof wedge (middle surface) in mm"
+                        }, {
+                                "name": "y_at_wedge",
+                                "type": "F",
+                                "info": "y position at atof wedge (middle surface) in mm"
+                        }, {
+                                "name": "z_at_wedge",
+                                "type": "F",
+                                "info": "z position at atof wedge (middle surface) in mm"
+                        },{
+                                "name": "L_at_wedge",
+                                "type": "F",
+                                "info": "path length at atof wedge (inner surface) in mm"
+                        },{
+                                "name": "L_in_wedge",
+                                "type": "F",
+                                "info": "path length inside atof wedge in mm"
+                        }
+                ]
+        },{
+                "name": "ATOF::hits",
+                "group": 22500,
+                "item": 21,
+                "info": "Hits in ATOF",
+                "entries": [		
+                        {
+                                "name": "id",
+                                "type": "S",
+                                "info": "hit id"
+                        }, {
+			        "name": "sector",
+                                "type": "I",
+                                "info": "atof sector"
+                        }, {
+                                "name": "layer",
+                                "type": "I",
+                                "info": "atof layer"			    
+                        },{
+                                "name": "component",
+                                "type": "I",
+                                "info": "atof component" 
+                        },{
+                                "name": "time",
+                                "type": "F",
+                                "info": "time in ns"
+                        },{
+                                "name": "x",
+                                "type": "F",
+                            "info": "x position in mm"
+                        }, {
+                                "name": "y",
+                                "type": "F",
+                                "info": "y position in mm"
+                        }, {
+                                "name": "z",
+                                "type": "F",
+                                "info": "z position in mm"
+                        },{
+                                "name": "energy",
+                                "type": "F",
+                                "info": "deposited energy in MeV"
+                        },{
+                                "name": "inlength",
+                                "type": "F",
+                            "info": "path length inside the detector (from entrance to hit) in mm"
+                        },{
+			        "name": "pathlength",
+                                "type": "F",
+                                "info": "path length to the hit in mm"
+                        }
+		]
+	},{
+                "name": "ATOF::clusters",
+                "group": 22500,
+                "item": 22,
+                "info": "Clusters in ATOF",
+                "entries": [		
+                        {
+                                "name": "id",
+                                "type": "S",
+                                "info": "hit id"
+                        }, {
+			        "name": "barsize",
+                                "type": "I",
+                                "info": "number of hits from the bars"
+                        }, {
+                                "name": "wedgesize",
+                                "type": "I",
+                                "info": "number of hits from the wedges"			    
+                        },{
+                                "name": "time",
+                                "type": "F",
+                                "info": "time in ns"
+                        },{
+                                "name": "x",
+                                "type": "F",
+                            "info": "x position in mm"
+                        }, {
+                                "name": "y",
+                                "type": "F",
+                                "info": "y position in mm"
+                        }, {
+                                "name": "z",
+                                "type": "F",
+                                "info": "z position in mm"
+                        },{
+                                "name": "energy",
+                                "type": "F",
+                                "info": "energy in MeV"
+                        },{
+			        "name": "pathlength",
+                                "type": "F",
+                                "info": "path length to the cluster in mm"
+                        },{
+                                "name": "inpathlength",
+                                "type": "F",
+                                "info": "path length inside the detector in mm"
+                        }
+		]
+	},{
 		"name": "AHDC::Hits",
 		"group": 23000,
 		"item": 23,
