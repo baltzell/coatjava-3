@@ -76,9 +76,10 @@ mon = ["BMT::adc","BMTRec::Clusters","BMTRec::Crosses","BMTRec::Hits","BMTRec::L
 
 # trigger validation needs these:
 trig = ["RAW::vtp","HTCC::rec","ECAL::adc","ECAL::calib","ECAL::clusters","ECAL::hits","ECAL::moments","ECAL::peaks","ECAL::tdc","ECAL::trigger"]
-
+# AI banks (very important)
+aibanks = ["MLDC::dc","MLDC::tracks"]
 # accumulate all the DST banks:
-dst = rectbai + rectb + mc + tag1 + dets
+dst = rectbai + rectb + mc + tag1 + dets + aibanks
 dsthb = dst + rechbai + rechb
 
 # generate the calib and mon schema:
